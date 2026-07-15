@@ -1,518 +1,1721 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>StoryToVideo — Auto Loop</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <script src="https://cdn.tailwindcss.com" defer></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        :root{--bg:#0c0b09;--bg2:#1a1816;--fg:#f5f0e8;--muted:#7a7268;--accent:#e8913a;--accent2:#f0a050;--card:#151311;--border:#2a2622;--red:#ef4444;--green:#22c55e;--purple:#a855f7;}
-        *{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--fg);min-height:100vh;overflow-x:hidden;}
-        body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 25% 15%,rgba(232,145,58,.07) 0%,transparent 55%),radial-gradient(ellipse at 75% 85%,rgba(200,120,40,.04) 0%,transparent 50%);pointer-events:none;}
-        .wrap{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:1.5rem;}
-        .canvas-box{position:relative;background:#000;border-radius:14px;overflow:hidden;aspect-ratio:16/9;box-shadow:0 24px 64px rgba(0,0,0,.55),0 0 0 1px var(--border);}
-        .canvas-box canvas{width:100%;height:100%;display:block;}
-        .bar-top,.bar-bot{position:absolute;left:0;right:0;height:7.5%;background:#000;pointer-events:none;z-index:2;}
-        .bar-top{top:0;}.bar-bot{bottom:0;}
-        .btn-p{background:var(--accent);color:#0c0b09;font-weight:600;padding:.7rem 1.5rem;border-radius:10px;border:none;cursor:pointer;font-family:inherit;font-size:.9rem;transition:all .3s;display:inline-flex;align-items:center;gap:.45rem;}
-        .btn-p:hover:not(:disabled){background:var(--accent2);transform:translateY(-1px);box-shadow:0 8px 24px rgba(232,145,58,.3);}
-        .btn-p:disabled{opacity:.45;cursor:not-allowed;transform:none;}
-        .btn-s{background:var(--bg2);color:var(--fg);font-weight:500;padding:.6rem 1.1rem;border-radius:10px;border:1px solid var(--border);cursor:pointer;font-family:inherit;font-size:.85rem;transition:all .3s;display:inline-flex;align-items:center;gap:.4rem;}
-        .btn-s:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
-        .btn-s:disabled{opacity:.35;cursor:not-allowed;}
-        .btn-stop{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-weight:600;padding:.7rem 1.5rem;border-radius:10px;border:none;cursor:pointer;font-family:inherit;font-size:.9rem;transition:all .3s;display:inline-flex;align-items:center;gap:.45rem;}
-        .btn-stop:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(239,68,68,.3);}
-        .btn-yt{background:linear-gradient(135deg,#ff0000,#cc0000);color:#fff;font-weight:600;padding:.75rem 1.5rem;border-radius:10px;border:none;cursor:pointer;font-family:inherit;font-size:.9rem;transition:all .3s;display:inline-flex;align-items:center;gap:.5rem;}
-        .btn-yt:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(255,0,0,.3);}
-        .btn-v{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:600;padding:.5rem .9rem;border-radius:8px;border:none;cursor:pointer;font-family:inherit;font-size:.8rem;transition:all .3s;display:inline-flex;align-items:center;gap:.35rem;}
-        .btn-v:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 18px rgba(34,197,94,.3);}
-        .btn-v:disabled{opacity:.35;cursor:not-allowed;transform:none;}
-        .sel{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.55rem .85rem;color:var(--fg);font-family:inherit;font-size:.85rem;outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%237a7268' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6 6.5-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
-        .sel:focus{border-color:var(--purple);}.sel option{background:var(--card);color:var(--fg);}
-        .speed-slider{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:var(--border);outline:none;}
-        .speed-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--purple);cursor:pointer;border:2px solid var(--bg);}
-        .speed-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--purple);cursor:pointer;border:2px solid var(--bg);}
-        .story-ta{width:100%;min-height:70px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.8rem;color:var(--fg);font-family:inherit;font-size:.85rem;line-height:1.6;resize:none;outline:none;}
-        .input-f{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.55rem .85rem;color:var(--fg);font-family:inherit;font-size:.85rem;outline:none;transition:border-color .3s;}
-        .input-f:focus{border-color:var(--accent);}
-        .badge{display:inline-flex;align-items:center;gap:.4rem;padding:.25rem .65rem;border-radius:20px;font-size:.75rem;font-weight:500;}
-        .b-idle{background:var(--bg2);color:var(--muted);}.b-run{background:rgba(232,145,58,.15);color:var(--accent);}
-        .b-voice{background:rgba(168,85,247,.14);color:var(--purple);}.b-done{background:rgba(34,197,94,.14);color:var(--green);}
-        .b-err{background:rgba(239,68,68,.14);color:var(--red);}.b-yt{background:rgba(255,0,0,.14);color:var(--red);}
-        .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.2rem;}
-        .steps{display:flex;gap:.4rem;margin:.8rem 0;}
-        .step{flex:1;padding:.45rem .3rem;border-radius:8px;text-align:center;font-size:.65rem;font-weight:600;color:var(--muted);background:var(--bg2);border:1px solid var(--border);transition:all .3s;text-transform:uppercase;letter-spacing:.2px;}
-        .step i{display:block;font-size:.8rem;margin-bottom:.2rem;}
-        .step.active{color:var(--accent);border-color:var(--accent);background:rgba(232,145,58,.1);}
-        .step.done{color:var(--green);border-color:var(--green);background:rgba(34,197,94,.1);}
-        .step.err{color:var(--red);border-color:var(--red);background:rgba(239,68,68,.1);}
-        .log{max-height:180px;overflow-y:auto;margin-top:.8rem;display:flex;flex-direction:column;gap:.25rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
-        .log-item{font-size:.75rem;padding:.3rem .55rem;border-radius:6px;background:var(--bg2);display:flex;gap:.45rem;align-items:flex-start;line-height:1.35;}
-        .log-item.ok{border-left:3px solid var(--green);}.log-item.err{border-left:3px solid var(--red);}
-        .log-item.warn{border-left:3px solid #f59e0b;}.log-item.info{border-left:3px solid var(--muted);}
-        .log-time{color:var(--muted);font-size:.65rem;flex-shrink:0;min-width:45px;}
-        .stats{display:flex;gap:1rem;flex-wrap:wrap;}
-        .stat{display:flex;align-items:center;gap:.3rem;font-size:.8rem;}
-        .stat-n{font-weight:700;font-size:.95rem;}
-        .toast-el{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:.8rem 1.2rem;color:var(--fg);font-size:.85rem;box-shadow:0 12px 40px rgba(0,0,0,.45);transform:translateY(130%);transition:transform .45s cubic-bezier(.16,1,.3,1);z-index:200;display:flex;align-items:center;gap:.6rem;max-width:380px;}
-        .toast-el.vis{transform:translateY(0);}
-        .idle-ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:3;transition:opacity .3s;}
-        .yt-progress{margin-bottom:1rem;display:none;}
-        .yt-progress.show{display:block;}
-        .prog-track{width:100%;height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
-        .prog-fill{height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width .25s;}
-        .file-info{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.8rem 1rem;margin-top:.8rem;display:none;align-items:center;gap:.7rem;}
-        .file-info.show{display:flex;animation:fadeUp .3s ease-out;}
-        .gate{text-align:center;padding:2rem 1rem;border:2px dashed var(--border);border-radius:14px;margin-bottom:1rem;transition:all .3s;}
-        .gate.connected{border-color:var(--green);border-style:solid;background:rgba(34,197,94,.05);}
-        @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
-        @keyframes spin{to{transform:rotate(360deg);}}.spin{animation:spin .7s linear infinite;}
-        @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}.pulse{animation:pulse 1.2s ease-in-out infinite;}
-        @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
-        @media(max-width:640px){.wrap{padding:1rem;}.steps{flex-wrap:wrap;}.step{min-width:calc(50% - .25rem);}.grid-2{grid-template-columns:1fr!important;}}
+        :root {
+            --bg: #0c0b09;
+            --bg2: #1a1816;
+            --fg: #f5f0e8;
+            --muted: #7a7268;
+            --accent: #e8913a;
+            --accent2: #f0a050;
+            --card: #151311;
+            --border: #2a2622;
+            --red: #ef4444;
+            --green: #22c55e;
+            --purple: #a855f7;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 25% 15%, rgba(232, 145, 58, .07) 0%, transparent 55%),
+                radial-gradient(ellipse at 75% 85%, rgba(200, 120, 40, .04) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .wrap {
+            position: relative;
+            z-index: 1;
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+        .canvas-box {
+            position: relative;
+            background: #000;
+            border-radius: 14px;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, .55), 0 0 0 1px var(--border);
+        }
+        .canvas-box canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .bar-top,
+        .bar-bot {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 7.5%;
+            background: #000;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .bar-top {
+            top: 0;
+        }
+        .bar-bot {
+            bottom: 0;
+        }
+        .btn-p {
+            background: var(--accent);
+            color: #0c0b09;
+            font-weight: 600;
+            padding: .7rem 1.5rem;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: .9rem;
+            transition: all .3s;
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+        }
+        .btn-p:hover:not(:disabled) {
+            background: var(--accent2);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(232, 145, 58, .3);
+        }
+        .btn-p:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-s {
+            background: var(--bg2);
+            color: var(--fg);
+            font-weight: 500;
+            padding: .6rem 1.1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: .85rem;
+            transition: all .3s;
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+        }
+        .btn-s:hover:not(:disabled) {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .btn-s:disabled {
+            opacity: .35;
+            cursor: not-allowed;
+        }
+        .btn-stop {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: #fff;
+            font-weight: 600;
+            padding: .7rem 1.5rem;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: .9rem;
+            transition: all .3s;
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+        }
+        .btn-stop:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(239, 68, 68, .3);
+        }
+        .btn-yt {
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+            color: #fff;
+            font-weight: 600;
+            padding: .75rem 1.5rem;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: .9rem;
+            transition: all .3s;
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+        }
+        .btn-yt:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(255, 0, 0, .3);
+        }
+        .btn-v {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #fff;
+            font-weight: 600;
+            padding: .5rem .9rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: .8rem;
+            transition: all .3s;
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+        }
+        .btn-v:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(34, 197, 94, .3);
+        }
+        .btn-v:disabled {
+            opacity: .35;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .sel {
+            width: 100%;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: .55rem .85rem;
+            color: var(--fg);
+            font-family: inherit;
+            font-size: .85rem;
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%237a7268' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6 6.5-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+        .sel:focus {
+            border-color: var(--purple);
+        }
+        .sel option {
+            background: var(--card);
+            color: var(--fg);
+        }
+        .speed-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            outline: none;
+        }
+        .speed-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--purple);
+            cursor: pointer;
+            border: 2px solid var(--bg);
+        }
+        .speed-slider::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--purple);
+            cursor: pointer;
+            border: 2px solid var(--bg);
+        }
+        .story-ta {
+            width: 100%;
+            min-height: 70px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: .8rem;
+            color: var(--fg);
+            font-family: inherit;
+            font-size: .85rem;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+        }
+        .input-f {
+            width: 100%;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: .55rem .85rem;
+            color: var(--fg);
+            font-family: inherit;
+            font-size: .85rem;
+            outline: none;
+            transition: border-color .3s;
+        }
+        .input-f:focus {
+            border-color: var(--accent);
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            padding: .25rem .65rem;
+            border-radius: 20px;
+            font-size: .75rem;
+            font-weight: 500;
+        }
+        .b-idle {
+            background: var(--bg2);
+            color: var(--muted);
+        }
+        .b-run {
+            background: rgba(232, 145, 58, .15);
+            color: var(--accent);
+        }
+        .b-voice {
+            background: rgba(168, 85, 247, .14);
+            color: var(--purple);
+        }
+        .b-done {
+            background: rgba(34, 197, 94, .14);
+            color: var(--green);
+        }
+        .b-err {
+            background: rgba(239, 68, 68, .14);
+            color: var(--red);
+        }
+        .b-yt {
+            background: rgba(255, 0, 0, .14);
+            color: var(--red);
+        }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.2rem;
+        }
+        .steps {
+            display: flex;
+            gap: .4rem;
+            margin: .8rem 0;
+        }
+        .step {
+            flex: 1;
+            padding: .45rem .3rem;
+            border-radius: 8px;
+            text-align: center;
+            font-size: .65rem;
+            font-weight: 600;
+            color: var(--muted);
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            transition: all .3s;
+            text-transform: uppercase;
+            letter-spacing: .2px;
+        }
+        .step i {
+            display: block;
+            font-size: .8rem;
+            margin-bottom: .2rem;
+        }
+        .step.active {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: rgba(232, 145, 58, .1);
+        }
+        .step.done {
+            color: var(--green);
+            border-color: var(--green);
+            background: rgba(34, 197, 94, .1);
+        }
+        .step.err {
+            color: var(--red);
+            border-color: var(--red);
+            background: rgba(239, 68, 68, .1);
+        }
+        .log {
+            max-height: 180px;
+            overflow-y: auto;
+            margin-top: .8rem;
+            display: flex;
+            flex-direction: column;
+            gap: .25rem;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+        .log-item {
+            font-size: .75rem;
+            padding: .3rem .55rem;
+            border-radius: 6px;
+            background: var(--bg2);
+            display: flex;
+            gap: .45rem;
+            align-items: flex-start;
+            line-height: 1.35;
+        }
+        .log-item.ok {
+            border-left: 3px solid var(--green);
+        }
+        .log-item.err {
+            border-left: 3px solid var(--red);
+        }
+        .log-item.warn {
+            border-left: 3px solid #f59e0b;
+        }
+        .log-item.info {
+            border-left: 3px solid var(--muted);
+        }
+        .log-time {
+            color: var(--muted);
+            font-size: .65rem;
+            flex-shrink: 0;
+            min-width: 45px;
+        }
+        .stats {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: .3rem;
+            font-size: .8rem;
+        }
+        .stat-n {
+            font-weight: 700;
+            font-size: .95rem;
+        }
+        .toast-el {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: .8rem 1.2rem;
+            color: var(--fg);
+            font-size: .85rem;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .45);
+            transform: translateY(130%);
+            transition: transform .45s cubic-bezier(.16, 1, .3, 1);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            max-width: 380px;
+        }
+        .toast-el.vis {
+            transform: translateY(0);
+        }
+        .idle-ov {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+            transition: opacity .3s;
+            pointer-events: none;
+        }
+        .yt-progress {
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .yt-progress.show {
+            display: block;
+        }
+        .prog-track {
+            width: 100%;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .prog-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 2px;
+            width: 0%;
+            transition: width .25s;
+        }
+        .file-info {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: .8rem 1rem;
+            margin-top: .8rem;
+            display: none;
+            align-items: center;
+            gap: .7rem;
+        }
+        .file-info.show {
+            display: flex;
+            animation: fadeUp .3s ease-out;
+        }
+        .gate {
+            text-align: center;
+            padding: 2rem 1rem;
+            border: 2px dashed var(--border);
+            border-radius: 14px;
+            margin-bottom: 1rem;
+            transition: all .3s;
+        }
+        .gate.connected {
+            border-color: var(--green);
+            border-style: solid;
+            background: rgba(34, 197, 94, .05);
+        }
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(14px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .spin {
+            animation: spin .7s linear infinite;
+        }
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .4;
+            }
+        }
+        .pulse {
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: .01ms !important;
+                transition-duration: .01ms !important;
+            }
+        }
+        @media (max-width: 640px) {
+            .wrap {
+                padding: 1rem;
+            }
+            .steps {
+                flex-wrap: wrap;
+            }
+            .step {
+                min-width: calc(50% - .25rem);
+            }
+            .grid-2 {
+                grid-template-columns: 1fr !important;
+            }
+            .grid-3 {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        /* Settings panel */
+        .settings-panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.4rem;
+            margin-bottom: 1.2rem;
+        }
+        .settings-panel summary {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            font-weight: 600;
+            font-size: .95rem;
+            cursor: pointer;
+            list-style: none;
+        }
+        .settings-panel summary::-webkit-details-marker {
+            display: none;
+        }
+        .settings-panel summary i.fa-chevron-down {
+            margin-left: auto;
+            font-size: .7rem;
+            color: var(--muted);
+            transition: transform .3s;
+        }
+        .settings-panel[open] summary i.fa-chevron-down {
+            transform: rotate(180deg);
+        }
+        .settings-panel .setting-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: .8rem;
+            margin-top: 1rem;
+        }
+        .settings-panel .setting-group label {
+            display: block;
+            font-size: .72rem;
+            color: var(--muted);
+            margin-bottom: .3rem;
+        }
+        .settings-panel .setting-group .input-f {
+            font-size: .8rem;
+        }
+        .settings-status {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            margin-top: .8rem;
+            padding: .6rem .9rem;
+            border-radius: 8px;
+            background: var(--bg2);
+            font-size: .8rem;
+        }
+        .settings-status .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .settings-status .dot.green {
+            background: var(--green);
+        }
+        .settings-status .dot.red {
+            background: var(--red);
+        }
+        .settings-status .dot.yellow {
+            background: #f59e0b;
+        }
+        .settings-status .dot.gray {
+            background: var(--muted);
+        }
+        .help-text {
+            font-size: .72rem;
+            color: var(--muted);
+            line-height: 1.6;
+            margin-top: .6rem;
+            padding: .8rem;
+            background: var(--bg2);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+        }
+        .help-text code {
+            background: var(--card);
+            padding: .1rem .4rem;
+            border-radius: 4px;
+            font-size: .7rem;
+            color: var(--accent);
+            word-break: break-all;
+        }
+        .help-text a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        .help-text a:hover {
+            text-decoration: underline;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: .8rem;
+        }
+        @media (max-width: 640px) {
+            .settings-panel .setting-group {
+                grid-template-columns: 1fr;
+            }
+        }
+        .inline-flex-center {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+        }
+        .mt-1 {
+            margin-top: .6rem;
+        }
+        .mb-05 {
+            margin-bottom: .5rem;
+        }
     </style>
 </head>
 <body>
-<div class="wrap">
-    <header style="margin-bottom:1.2rem;">
-        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.3rem;">
-            <div style="width:36px;height:36px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;">
-                <i class="fas fa-clapperboard" style="color:#0c0b09;font-size:.95rem;"></i>
-            </div>
-            <h1 style="font-size:1.5rem;font-weight:700;letter-spacing:-.5px;">StoryToVideo <span style="color:var(--accent);font-size:.85rem;font-weight:400;">Auto</span></h1>
-        </div>
-        <p style="color:var(--muted);font-size:.85rem;margin-left:2.8rem;">Random genre stories, narrated videos, auto-uploaded to your YouTube channel</p>
-    </header>
 
-    <!-- Step 1: Connect YouTube -->
-    <div id="gateEl" class="gate">
-        <div style="margin-bottom:1rem;">
-            <div style="width:60px;height:60px;border-radius:50%;background:rgba(255,0,0,.1);display:flex;align-items:center;justify-content:center;margin:0 auto .8rem;">
-                <i class="fab fa-youtube" style="color:var(--red);font-size:1.8rem;"></i>
+    <div class="wrap">
+
+        <!-- HEADER -->
+        <header style="margin-bottom:1.2rem;">
+            <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.3rem;">
+                <div style="width:36px;height:36px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-clapperboard" style="color:#0c0b09;font-size:.95rem;"></i>
+                </div>
+                <h1 style="font-size:1.5rem;font-weight:700;letter-spacing:-.5px;">StoryToVideo <span style="color:var(--accent);font-size:.85rem;font-weight:400;">Auto</span></h1>
             </div>
-            <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:.4rem;">Step 1: Connect Your YouTube Account</h2>
-            <p style="color:var(--muted);font-size:.85rem;max-width:400px;margin:0 auto;line-height:1.5;">
-                Sign in with Google to authorize automatic uploads to your channel. Videos will be uploaded as <strong style="color:var(--fg);">Private</strong> by default.
+            <p style="color:var(--muted);font-size:.85rem;margin-left:2.8rem;">Random genre stories, narrated videos, auto-uploaded to your YouTube channel</p>
+        </header>
+
+        <!-- ===== SETTINGS PANEL (fixes OAuth origin_mismatch) ===== -->
+        <details class="settings-panel" id="settingsPanel" open>
+            <summary>
+                <i class="fas fa-sliders-h" style="color:var(--accent);"></i> Settings &amp; Credentials
+                <i class="fas fa-chevron-down"></i>
+            </summary>
+
+            <div class="setting-group">
+                <div>
+                    <label><i class="fas fa-key" style="color:var(--accent);"></i> Gemini API Key</label>
+                    <input id="apiKeyInput" class="input-f" type="text" placeholder="AIzaSy..." value="AQ.Ab8RN6KR925XE2TZrE8_q8zy8vvpoztdnC_82Yw92TTyDXl97Q" />
+                    <p style="font-size:.65rem;color:var(--muted);margin-top:.2rem;">Get from <a href="https://ai.google.dev/" target="_blank" style="color:var(--accent);">Google AI Studio</a></p>
+                </div>
+                <div>
+                    <label><i class="fab fa-google" style="color:var(--red);"></i> OAuth Client ID</label>
+                    <input id="clientIdInput" class="input-f" type="text" placeholder="699259843998-xxx.apps.googleusercontent.com" value="699259843998-qg5t2emtfubf2gpj7hbfrdgbi3lqocl5.apps.googleusercontent.com" />
+                    <p style="font-size:.65rem;color:var(--muted);margin-top:.2rem;">From <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--accent);">Google Cloud Console</a></p>
+                </div>
+            </div>
+
+            <!-- Origin warning + fix instructions -->
+            <div class="help-text" id="originHelp">
+                <strong style="color:var(--fg);">⚠️ To fix the <code>origin_mismatch</code> error:</strong><br />
+                1. Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console → Credentials</a><br />
+                2. Find your OAuth 2.0 Client ID and click the pencil ✏️ to edit<br />
+                3. Under <strong>"Authorized JavaScript origins"</strong>, add your current domain:<br />
+                &nbsp;&nbsp;<code id="currentOriginDisplay" style="background:var(--card);padding:2px 8px;border-radius:4px;">loading…</code><br />
+                4. Click <strong>Save</strong> and then click <strong>"Sign in with Google"</strong> below.
+                <br /><br />
+                <span style="color:var(--muted);font-size:.7rem;">
+                    <i class="fas fa-info-circle"></i> For local testing, add <code>http://localhost:8000</code>, <code>http://127.0.0.1:8000</code>, or your specific port.
+                </span>
+            </div>
+
+            <div style="display:flex;flex-wrap:wrap;gap:.6rem;margin-top:.8rem;align-items:center;">
+                <button id="saveSettingsBtn" class="btn-p" style="background:var(--purple);"><i class="fas fa-save"></i> Save Settings</button>
+                <button id="testSettingsBtn" class="btn-s"><i class="fas fa-vial"></i> Test Connection</button>
+                <span id="settingsStatusMsg" style="font-size:.75rem;color:var(--muted);margin-left:.2rem;"></span>
+            </div>
+
+            <div class="settings-status" id="settingsStatus">
+                <span class="dot gray" id="statusDot"></span>
+                <span id="statusText">Configure your API key and Client ID above, then Save.</span>
+            </div>
+        </details>
+
+        <!-- ===== GATE: YouTube Connect ===== -->
+        <div id="gateEl" class="gate">
+            <div style="margin-bottom:1rem;">
+                <div style="width:60px;height:60px;border-radius:50%;background:rgba(255,0,0,.1);display:flex;align-items:center;justify-content:center;margin:0 auto .8rem;">
+                    <i class="fab fa-youtube" style="color:var(--red);font-size:1.8rem;"></i>
+                </div>
+                <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:.4rem;">Step 1: Connect Your YouTube Account</h2>
+                <p style="color:var(--muted);font-size:.85rem;max-width:400px;margin:0 auto;line-height:1.5;">
+                    Sign in with Google to authorize automatic uploads to your channel.
+                    Videos will be uploaded as <strong style="color:var(--fg);">Private</strong> by default.
+                </p>
+            </div>
+            <button id="ytSignInBtn" class="btn-yt" style="margin:0 auto;"><i class="fab fa-google"></i> Sign in with Google</button>
+            <p style="font-size:.7rem;color:var(--muted);margin-top:.6rem;">
+                Requires YouTube Data API v3 enabled.
+                <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">Enable here</a>
             </p>
+            <div id="gateConnected" style="display:none;margin-top:1rem;">
+                <div style="display:flex;align-items:center;justify-content:center;gap:.5rem;color:var(--green);font-weight:600;font-size:.9rem;">
+                    <i class="fas fa-check-circle"></i> Connected — ready to start
+                </div>
+            </div>
         </div>
-        <button id="ytSignInBtn" class="btn-yt" style="margin:0 auto;"><i class="fab fa-google"></i> Sign in with Google</button>
-        <p style="font-size:.7rem;color:var(--muted);margin-top:.6rem;">Requires YouTube Data API v3 enabled. <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">Enable here</a></p>
-        <div id="gateConnected" style="display:none;margin-top:1rem;">
-            <div style="display:flex;align-items:center;justify-content:center;gap:.5rem;color:var(--green);font-weight:600;font-size:.9rem;">
-                <i class="fas fa-check-circle"></i> Connected — ready to start
+
+        <!-- Voice Settings -->
+        <details class="card" style="margin-bottom:1rem;cursor:pointer;">
+            <summary style="display:flex;align-items:center;gap:.5rem;font-weight:600;font-size:.9rem;list-style:none;">
+                <i class="fas fa-microphone-lines" style="color:var(--purple);"></i> Voice Settings
+                <i class="fas fa-chevron-down" style="margin-left:auto;font-size:.7rem;color:var(--muted);"></i>
+            </summary>
+            <div style="margin-top:1rem;display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem;" class="grid-2">
+                <div><label style="display:block;font-size:.72rem;color:var(--muted);margin-bottom:.3rem;">Language</label><select id="langSel" class="sel"><option value="en">English</option><option value="hi">Hindi</option></select></div>
+                <div><label style="display:block;font-size:.72rem;color:var(--muted);margin-bottom:.3rem;">Voice</label><select id="voiceSel" class="sel"></select></div>
+                <div><label style="display:block;font-size:.72rem;color:var(--muted);margin-bottom:.3rem;">Speed: <span id="speedVal">1.0</span>x</label><input type="range" id="speedSlider" class="speed-slider" min="0.5" max="1.5" step="0.1" value="1" style="margin-top:.5rem;"></div>
+            </div>
+            <div style="margin-top:.7rem;display:flex;gap:.5rem;align-items:center;">
+                <button id="previewVoiceBtn" class="btn-v" disabled><i class="fas fa-headphones"></i> Preview</button>
+                <span id="voiceHint" style="font-size:.72rem;color:var(--muted);"></span>
+            </div>
+        </details>
+
+        <!-- Auto Controls (locked until signed in) -->
+        <div class="card" id="autoPanel" style="opacity:.4;pointer-events:none;transition:all .4s;">
+            <div style="display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-bottom:.8rem;">
+                <button id="startBtn" class="btn-p" disabled><i class="fas fa-bolt"></i> Start Auto Loop</button>
+                <button id="stopBtn" class="btn-stop" disabled><i class="fas fa-stop"></i> Stop</button>
+                <div style="flex:1;"></div>
+                <div id="badge" class="badge b-idle"><i class="fas fa-circle" style="font-size:.3rem;"></i> Waiting</div>
+            </div>
+            <div class="stats">
+                <div class="stat"><i class="fas fa-film" style="color:var(--accent);"></i> Made: <span id="statGen" class="stat-n" style="color:var(--accent);">0</span></div>
+                <div class="stat"><i class="fab fa-youtube" style="color:var(--red);"></i> Uploaded: <span id="statUp" class="stat-n" style="color:var(--red);">0</span></div>
+                <div class="stat"><i class="fas fa-triangle-exclamation" style="color:#f59e0b;"></i> Failed: <span id="statFail" class="stat-n" style="color:#f59e0b;">0</span></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:.5rem;margin:.6rem 0 .4rem;">
+                <span style="font-size:.75rem;color:var(--muted);">Genre:</span>
+                <span id="genreDisplay" style="font-size:.85rem;font-weight:600;color:var(--accent);">—</span>
+            </div>
+            <div class="steps" id="stepsEl">
+                <div class="step" data-step="story"><i class="fas fa-pen-fancy"></i>Story</div>
+                <div class="step" data-step="images"><i class="fas fa-images"></i>Images</div>
+                <div class="step" data-step="record"><i class="fas fa-circle-dot"></i>Record</div>
+                <div class="step" data-step="upload"><i class="fab fa-youtube"></i>Upload</div>
+            </div>
+            <div id="storyPreview" style="display:none;">
+                <label style="display:block;font-size:.72rem;color:var(--muted);margin-bottom:.25rem;">Current Story:</label>
+                <textarea id="storyTa" class="story-ta" readonly></textarea>
+            </div>
+            <div id="logWrap" style="display:none;">
+                <label style="display:block;font-size:.72rem;color:var(--muted);margin-bottom:.25rem;">Activity Log:</label>
+                <div id="logEl" class="log"></div>
+            </div>
+        </div>
+
+        <!-- Canvas -->
+        <div class="canvas-box" style="margin-bottom:.8rem;">
+            <div class="bar-top"></div>
+            <div class="bar-bot"></div>
+            <canvas id="cv" width="1280" height="720"></canvas>
+            <div class="idle-ov" id="idleOv">
+                <i class="fas fa-youtube" style="font-size:2.5rem;color:var(--muted);opacity:.2;margin-bottom:.7rem;"></i>
+                <p style="color:var(--muted);opacity:.4;font-size:.85rem;">Sign in first, then start</p>
+            </div>
+        </div>
+
+        <div id="fileInfo" class="file-info">
+            <i class="fab fa-youtube" style="color:var(--red);font-size:1rem;flex-shrink:0;"></i>
+            <div style="flex:1;min-width:0;">
+                <p id="fileName" style="font-weight:600;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</p>
+                <p id="fileMeta" style="color:var(--muted);font-size:.72rem;">—</p>
+            </div>
+        </div>
+
+        <!-- Hidden YT upload config -->
+        <div id="ytUploadConfig" style="display:none;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.8rem;" class="grid-2">
+                <div><label style="display:block;font-size:.72rem;color:var(--muted);margin-bottom:.3rem;">Title Prefix</label><input id="ytTitle" class="input-f" value="Short Story - " placeholder="My Story Video"></div>
+                <div><label style="display:block;font-size:.72rem;color:var(--muted);margin-bottom:.3rem;">Privacy</label><select id="ytPrivacy" class="sel"><option value="private">Private</option><option value="unlisted">Unlisted</option><option value="public">Public</option></select></div>
+            </div>
+            <div id="ytProgress" class="yt-progress">
+                <div style="display:flex;justify-content:space-between;margin-bottom:.3rem;">
+                    <span id="ytProgLbl" style="font-size:.72rem;color:var(--muted);">Uploading…</span>
+                    <span id="ytProgPct" style="font-size:.72rem;color:var(--red);font-weight:600;">0%</span>
+                </div>
+                <div class="prog-track"><div id="ytProgBar" class="prog-fill" style="background:var(--red);"></div></div>
             </div>
         </div>
     </div>
 
-    <!-- Voice Settings -->
-    <details class="card" style="margin-bottom:1rem;cursor:pointer;">
-        <summary style="display:flex;align-items:center;gap:.5rem;font-weight:600;font-size:.9rem;list-style:none;">
-            <i class="fas fa-microphone-lines" style="color:var(--purple);"></i> Voice Settings
-            <i class="fas fa-chevron-down" style="margin-left:auto;font-size:.7rem;color:var(--muted);"></i>
-        </summary>
-        <div style="margin-top:1rem;display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem;" class="grid-2">
-            <div><label style="display:block;font-size:.72rem;color:var(--muted);margin-bottom:.3rem;">Language</label><select id="langSel" class="sel"><option value="en">English</option><option value="hi">Hindi</option></select></div>
-            <div><label style="display:block;font-size:.72rem;color:var(--muted);margin-bottom:.3rem;">Voice</label><select id="voiceSel" class="sel"></select></div>
-            <div><label style="display:block;font-size:.72rem;color:var(--muted);margin-bottom:.3rem;">Speed: <span id="speedVal">1.0</span>x</label><input type="range" id="speedSlider" class="speed-slider" min="0.5" max="1.5" step="0.1" value="1" style="margin-top:.5rem;"></div>
-        </div>
-        <div style="margin-top:.7rem;display:flex;gap:.5rem;align-items:center;">
-            <button id="previewVoiceBtn" class="btn-v" disabled><i class="fas fa-headphones"></i> Preview</button>
-            <span id="voiceHint" style="font-size:.72rem;color:var(--muted);"></span>
-        </div>
-    </details>
+    <!-- Toast -->
+    <div id="toast" class="toast-el"><i id="tIcon" class="fas fa-check-circle" style="color:var(--green);"></i><span id="tMsg">OK</span></div>
 
-    <!-- Auto Controls (locked until signed in) -->
-    <div class="card" id="autoPanel" style="opacity:.4;pointer-events:none;transition:all .4s;">
-        <div style="display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-bottom:.8rem;">
-            <button id="startBtn" class="btn-p" disabled><i class="fas fa-bolt"></i> Start Auto Loop</button>
-            <button id="stopBtn" class="btn-stop" disabled><i class="fas fa-stop"></i> Stop</button>
-            <div style="flex:1;"></div>
-            <div id="badge" class="badge b-idle"><i class="fas fa-circle" style="font-size:.3rem;"></i> Waiting</div>
-        </div>
-        <div class="stats">
-            <div class="stat"><i class="fas fa-film" style="color:var(--accent);"></i> Made: <span id="statGen" class="stat-n" style="color:var(--accent);">0</span></div>
-            <div class="stat"><i class="fab fa-youtube" style="color:var(--red);"></i> Uploaded: <span id="statUp" class="stat-n" style="color:var(--red);">0</span></div>
-            <div class="stat"><i class="fas fa-triangle-exclamation" style="color:#f59e0b;"></i> Failed: <span id="statFail" class="stat-n" style="color:#f59e0b;">0</span></div>
-        </div>
-        <div style="display:flex;align-items:center;gap:.5rem;margin:.6rem 0 .4rem;">
-            <span style="font-size:.75rem;color:var(--muted);">Genre:</span>
-            <span id="genreDisplay" style="font-size:.85rem;font-weight:600;color:var(--accent);">—</span>
-        </div>
-        <div class="steps" id="stepsEl">
-            <div class="step" data-step="story"><i class="fas fa-pen-fancy"></i>Story</div>
-            <div class="step" data-step="images"><i class="fas fa-images"></i>Images</div>
-            <div class="step" data-step="record"><i class="fas fa-circle-dot"></i>Record</div>
-            <div class="step" data-step="upload"><i class="fab fa-youtube"></i>Upload</div>
-        </div>
-        <div id="storyPreview" style="display:none;">
-            <label style="display:block;font-size:.72rem;color:var(--muted);margin-bottom:.25rem;">Current Story:</label>
-            <textarea id="storyTa" class="story-ta" readonly></textarea>
-        </div>
-        <div id="logWrap" style="display:none;">
-            <label style="display:block;font-size:.72rem;color:var(--muted);margin-bottom:.25rem;">Activity Log:</label>
-            <div id="logEl" class="log"></div>
-        </div>
-    </div>
+    <script>
+        // ===== CONFIG =====
+        const SLIDE_MS = 2000,
+            TRANS_MS = 450,
+            CW = 1280,
+            CH = 720,
+            WPS = 5;
 
-    <!-- Canvas -->
-    <div class="canvas-box" style="margin-bottom:.8rem;">
-        <div class="bar-top"></div><div class="bar-bot"></div>
-        <canvas id="cv" width="1280" height="720"></canvas>
-        <div class="idle-ov" id="idleOv">
-            <i class="fas fa-youtube" style="font-size:2.5rem;color:var(--muted);opacity:.2;margin-bottom:.7rem;"></i>
-            <p style="color:var(--muted);opacity:.4;font-size:.85rem;">Sign in first, then start</p>
-        </div>
-    </div>
+        const GENRES = [
+            'Action', 'Adventure', 'Comedy', 'Crime', 'Drama', 'Fantasy', 'Science Fiction',
+            'Horror', 'Mystery', 'Thriller', 'Suspense', 'Romance', 'Historical Fiction',
+            'Historical Fantasy', 'Alternate History', 'Western', 'War', 'Military Fiction',
+            'Political Fiction', 'Legal Thriller', 'Medical Drama', 'Psychological Thriller',
+            'Psychological Horror', 'Paranormal', 'Supernatural', 'Urban Fantasy', 'Dark Fantasy',
+            'Epic Fantasy', 'High Fantasy', 'Low Fantasy', 'Sword and Sorcery', 'Mythology',
+            'Fairy Tale', 'Folklore', 'Magical Realism', 'Dystopian', 'Post-Apocalyptic',
+            'Steampunk', 'Cyberpunk', 'Space Opera', 'Time Travel', 'First Contact',
+            'Alien Invasion', 'Coming of Age', 'Slice of Life', 'Survival', 'Disaster',
+            'Sports Fiction', 'Detective', 'Noir', 'Spy Fiction', 'Heist', 'Adventure Thriller',
+            'Monster Fiction', 'Zombie Fiction', 'Vampire Fiction', 'Ghost Story', 'Gothic Fiction',
+            'Dark Romance', 'Romantic Comedy', 'Young Adult', 'Children\'s Fiction',
+            'Fairy Tale Retelling', 'Myth Retelling', 'LitRPG', 'Portal Fantasy', 'Isekai',
+            'Cultivation', 'Wuxia', 'Martial Arts', 'Pirate Adventure', 'Treasure Hunt',
+            'Road Trip', 'Survival Horror', 'Cosmic Horror', 'Lovecraftian Horror', 'Body Horror',
+            'Folk Horror', 'Techno Thriller', 'Eco Thriller', 'Climate Fiction',
+            'Speculative Fiction', 'Satire', 'Tragedy', 'Philosophical Fiction',
+            'Literary Fiction', 'Flash Fiction'
+        ];
 
-    <div id="fileInfo" class="file-info">
-        <i class="fab fa-youtube" style="color:var(--red);font-size:1rem;flex-shrink:0;"></i>
-        <div style="flex:1;min-width:0;">
-            <p id="fileName" style="font-weight:600;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</p>
-            <p id="fileMeta" style="color:var(--muted);font-size:.72rem;">—</p>
-        </div>
-    </div>
+        // ===== DOM refs =====
+        const $ = id => document.getElementById(id);
+        const cv = $('cv'),
+            ctx = cv.getContext('2d');
+        const startBtn = $('startBtn'),
+            stopBtn = $('stopBtn');
+        const badge = $('badge'),
+            idleOv = $('idleOv');
+        const genreDisplay = $('genreDisplay'),
+            storyPreview = $('storyPreview'),
+            storyTa = $('storyTa');
+        const logWrap = $('logWrap'),
+            logEl = $('logEl');
+        const voiceSel = $('voiceSel'),
+            speedSlider = $('speedSlider'),
+            speedVal = $('speedVal');
+        const voiceHint = $('voiceHint'),
+            previewVoiceBtn = $('previewVoiceBtn'),
+            langSel = $('langSel');
+        const fileInfo = $('fileInfo'),
+            fileName = $('fileName'),
+            fileMeta = $('fileMeta');
+        const gateEl = $('gateEl'),
+            autoPanel = $('autoPanel'),
+            gateConnected = $('gateConnected');
+        const ytSignInBtn = $('ytSignInBtn');
+        const apiKeyInput = $('apiKeyInput'),
+            clientIdInput = $('clientIdInput');
+        const saveSettingsBtn = $('saveSettingsBtn'),
+            testSettingsBtn = $('testSettingsBtn');
+        const settingsStatus = $('settingsStatus'),
+            statusDot = $('statusDot'),
+            statusText = $('statusText');
+        const settingsStatusMsg = $('settingsStatusMsg');
+        const originHelp = $('originHelp');
+        const currentOriginDisplay = $('currentOriginDisplay');
 
-    <!-- Hidden YT upload config -->
-    <div id="ytUploadConfig" style="display:none;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.8rem;" class="grid-2">
-            <div><label style="display:block;font-size:.72rem;color:var(--muted);margin-bottom:.3rem;">Title Prefix</label><input id="ytTitle" class="input-f" value="Short Story - " placeholder="My Story Video"></div>
-            <div><label style="display:block;font-size:.72rem;color:var(--muted);margin-bottom:.3rem;">Privacy</label><select id="ytPrivacy" class="sel"><option value="private">Private</option><option value="unlisted">Unlisted</option><option value="public">Public</option></select></div>
-        </div>
-        <div id="ytProgress" class="yt-progress">
-            <div style="display:flex;justify-content:space-between;margin-bottom:.3rem;">
-                <span id="ytProgLbl" style="font-size:.72rem;color:var(--muted);">Uploading...</span>
-                <span id="ytProgPct" style="font-size:.72rem;color:var(--red);font-weight:600;">0%</span>
-            </div>
-            <div class="prog-track"><div id="ytProgBar" class="prog-fill" style="background:var(--red);"></div></div>
-        </div>
-    </div>
-</div>
+        // ===== STATE =====
+        let segs = [],
+            imgs = [],
+            playing = false,
+            animId = null,
+            t0 = 0;
+        let utter = null,
+            ttsEnded = false;
+        let recorder = null,
+            recChunks = [],
+            videoBlob = null,
+            videoUrl = null;
+        let accessToken = null,
+            tokenClient = null;
+        let autoRunning = false,
+            currentGenre = '';
+        let stats = { gen: 0, up: 0, fail: 0, consecFail: 0 };
+        let apiKey = '',
+            clientId = '';
 
-<div id="toast" class="toast-el"><i id="tIcon" class="fas fa-check-circle" style="color:var(--green);"></i><span id="tMsg">OK</span></div>
+        // ===== HELPERS =====
+        function fmtBytes(b) { return b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(1) + ' MB'; }
 
-<script>
-const SLIDE_MS=2000,TRANS_MS=450,CW=1280,CH=720,WPS=5;
-const API_KEY='AQ.Ab8RN6KR925XE2TZrE8_q8zy8vvpoztdnC_82Yw92TTyDXl97Q';
-const GENRES=['Action','Adventure','Comedy','Crime','Drama','Fantasy','Science Fiction','Horror','Mystery','Thriller','Suspense','Romance','Historical Fiction','Historical Fantasy','Alternate History','Western','War','Military Fiction','Political Fiction','Legal Thriller','Medical Drama','Psychological Thriller','Psychological Horror','Paranormal','Supernatural','Urban Fantasy','Dark Fantasy','Epic Fantasy','High Fantasy','Low Fantasy','Sword and Sorcery','Mythology','Fairy Tale','Folklore','Magical Realism','Dystopian','Post-Apocalyptic','Steampunk','Cyberpunk','Space Opera','Time Travel','First Contact','Alien Invasion','Coming of Age','Slice of Life','Survival','Disaster','Sports Fiction','Detective','Noir','Spy Fiction','Heist','Adventure Thriller','Monster Fiction','Zombie Fiction','Vampire Fiction','Ghost Story','Gothic Fiction','Dark Romance','Romantic Comedy','Young Adult','Children\'s Fiction','Fairy Tale Retelling','Myth Retelling','LitRPG','Portal Fantasy','Isekai','Cultivation','Wuxia','Martial Arts','Pirate Adventure','Treasure Hunt','Road Trip','Survival Horror','Cosmic Horror','Lovecraftian Horror','Body Horror','Folk Horror','Techno Thriller','Eco Thriller','Climate Fiction','Speculative Fiction','Satire','Tragedy','Philosophical Fiction','Literary Fiction','Flash Fiction'];
-
-let segs=[],imgs=[],playing=false,animId=null,t0=0;
-let utter=null,ttsEnded=false;
-let recorder=null,recChunks=[],videoBlob=null,videoUrl=null;
-let accessToken=null,tokenClient=null;
-let autoRunning=false,currentGenre='';
-let stats={gen:0,up:0,fail:0,consecFail:0};
-
-const $=id=>document.getElementById(id);
-const cv=$('cv'),ctx=cv.getContext('2d');
-const startBtn=$('startBtn'),stopBtn=$('stopBtn');
-const badge=$('badge'),idleOv=$('idleOv');
-const genreDisplay=$('genreDisplay'),storyPreview=$('storyPreview'),storyTa=$('storyTa');
-const logWrap=$('logWrap'),logEl=$('logEl');
-const voiceSel=$('voiceSel'),speedSlider=$('speedSlider'),speedVal=$('speedVal');
-const voiceHint=$('voiceHint'),previewVoiceBtn=$('previewVoiceBtn'),langSel=$('langSel');
-const fileInfo=$('fileInfo'),fileName=$('fileName'),fileMeta=$('fileMeta');
-const gateEl=$('gateEl'),autoPanel=$('autoPanel'),gateConnected=$('gateConnected');
-const ytSignInBtn=$('ytSignInBtn');
-
-/* === Voice === */
-function getLangCode(){return langSel.value==='hi'?'hi-IN':'en-US';}
-function loadVoices(){
-    const all=speechSynthesis.getVoices();if(!all.length)return;
-    const p=langSel.value,lv=all.filter(v=>v.lang.startsWith(p)),ov=all.filter(v=>!v.lang.startsWith(p));
-    voiceSel.innerHTML='';
-    [...lv,...ov].forEach(v=>{const o=document.createElement('option');o.value=all.indexOf(v);const isL=v.lang.startsWith(p);o.textContent=`${v.name}${isL?'':' ['+v.lang+']'}${v.localService?'':' (online)'}`;if(!isL)o.style.color='var(--muted)';voiceSel.appendChild(o);});
-    const b=lv.findIndex(v=>v.name.toLowerCase().includes('google'));
-    if(b>=0&&lv[b])voiceSel.value=all.indexOf(lv[b]);else if(lv.length)voiceSel.value=all.indexOf(lv[0]);
-    voiceHint.textContent=lv.length?lv.length+' voices':'No voices for language';
-    voiceHint.style.color=lv.length?'var(--muted)':'#f59e0b';
-    previewVoiceBtn.disabled=true;
-}
-speechSynthesis.onvoiceschanged=loadVoices;loadVoices();
-langSel.addEventListener('change',loadVoices);
-speedSlider.addEventListener('input',()=>{speedVal.textContent=parseFloat(speedSlider.value).toFixed(1);});
-function getVoice(){const v=speechSynthesis.getVoices();return v[parseInt(voiceSel.value)]||v[0]||null;}
-previewVoiceBtn.addEventListener('click',()=>{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance('Hello, this is a voice preview.');u.voice=getVoice();u.rate=parseFloat(speedSlider.value);u.pitch=1;u.lang=getLangCode();u.onend=u.onerror=()=>{};speechSynthesis.speak(u);});
-
-/* === Text Split === */
-function splitText(text){
-    const out=[],sents=text.match(/[^.!?।]+[.!?।]+/g)||[text];
-    for(const s of sents){const w=s.trim().split(/\s+/).filter(Boolean);
-    if(w.length<=WPS){if(w.length)out.push(w.join(' '));continue;}
-    const parts=s.split(/[,;،]/);let buf='';
-    for(const p of parts){const pw=p.trim().split(/\s+/).filter(Boolean).length;const bw=buf?buf.split(/\s+/).filter(Boolean).length:0;
-    if(bw+pw>WPS&&buf){out.push(buf.trim());buf=p;}else{buf+=(buf?' ':'')+p;}
-    if(buf.split(/\s+/).filter(Boolean).length>=WPS){out.push(buf.trim());buf='';}}
-    if(buf){const rw=buf.trim().split(/\s+/).filter(Boolean);for(let i=0;i<rw.length;i+=WPS)out.push(rw.slice(i,i+WPS).join(' '));}}
-    return out.filter(s=>s.trim().length>0);
-}
-
-/* === Image === */
-function loadImg(url){return new Promise((res,rej)=>{const img=new Image();img.crossOrigin='anonymous';img.onload=()=>res(img);img.onerror=()=>{const i2=new Image();i2.crossOrigin='anonymous';i2.onload=()=>res(i2);i2.onerror=rej;i2.src=url.replace(/seed\/[^/]+/,`seed/r${Math.random().toString(36).slice(2,8)}`);};img.src=url;});}
-
-/* === Ken Burns === */
-const KB=[{sS:1,eS:1.16,sX:0,sY:0,eX:-.04,eY:-.04},{sS:1.12,eS:1,sX:-.04,sY:0,eX:0,eY:0},{sS:1,eS:1.14,sX:0,sY:-.03,eX:-.03,eY:.01},{sS:1.1,eS:1,sX:.03,sY:0,eX:-.01,eY:-.03},{sS:1,eS:1.18,sX:-.02,sY:-.02,eX:.01,eY:.01},{sS:1.06,eS:1.14,sX:.02,sY:-.01,eX:-.02,eY:.02}];
-function getKB(i){return KB[i%KB.length];}
-function drawCover(img,sc,ox,oy,a){const ir=img.width/img.height,cr=CW/CH;let dw,dh;if(ir>cr){dh=CH*sc;dw=dh*ir;}else{dw=CW*sc;dh=dw/ir;}ctx.save();ctx.globalAlpha=a;ctx.drawImage(img,(CW-dw)/2+ox*CW,(CH-dh)/2+oy*CH,dw,dh);ctx.restore();}
-
-function drawFrame(idx,prog){
-    if(idx>=imgs.length)return;const img=imgs[idx],kb=getKB(idx);
-    const t=prog<.5?2*prog*prog:1-Math.pow(-2*prog+2,2)/2;
-    const sc=kb.sS+(kb.eS-kb.sS)*t,ox=kb.sX+(kb.eX-kb.sX)*t,oy=kb.sY+(kb.eY-kb.sY)*t;
-    ctx.fillStyle='#000';ctx.fillRect(0,0,CW,CH);
-    if(idx>0&&prog<TRANS_MS/SLIDE_MS){const fp=prog/(TRANS_MS/SLIDE_MS),pk=getKB(idx-1);drawCover(imgs[idx-1],pk.eS,pk.eX,pk.eY,1-fp);drawCover(img,sc,ox,oy,fp);}else{drawCover(img,sc,ox,oy,1);}
-    ctx.fillStyle='rgba(232,145,58,0.04)';ctx.fillRect(0,0,CW,CH);ctx.fillStyle='rgba(0,0,0,0.12)';ctx.fillRect(0,0,CW,CH);
-    const vig=ctx.createRadialGradient(CW/2,CH/2,CW*.28,CW/2,CH/2,CW*.78);vig.addColorStop(0,'rgba(0,0,0,0)');vig.addColorStop(1,'rgba(0,0,0,0.55)');ctx.fillStyle=vig;ctx.fillRect(0,0,CW,CH);
-    if(segs[idx]){const txt=segs[idx],alpha=Math.min(Math.min(1,prog*5),Math.min(1,(1-prog)*5));ctx.save();ctx.globalAlpha=alpha;ctx.font='600 28px "Space Grotesk",sans-serif';let disp=txt;while(ctx.measureText(disp).width>CW-152&&disp.length>8)disp=disp.slice(0,-1);if(disp!==txt)disp+='...';const tw=ctx.measureText(disp).width,pad=36,bw=Math.min(tw+pad*2,CW-80),bh=54,bx=(CW-bw)/2,by=CH*.82,r=12;ctx.beginPath();ctx.moveTo(bx+r,by);ctx.lineTo(bx+bw-r,by);ctx.quadraticCurveTo(bx+bw,by,bx+bw,by+r);ctx.lineTo(bx+bw,by+bh-r);ctx.quadraticCurveTo(bx+bw,by+bh,bx+bw-r,by+bh);ctx.lineTo(bx+r,by+bh);ctx.quadraticCurveTo(bx,by+bh,bx,by+bh-r);ctx.lineTo(bx,by+r);ctx.quadraticCurveTo(bx,by,bx+r,by);ctx.closePath();ctx.fillStyle='rgba(0,0,0,0.72)';ctx.fill();ctx.beginPath();ctx.moveTo(bx+r,by);ctx.lineTo(bx+bw-r,by);ctx.strokeStyle='rgba(232,145,58,0.85)';ctx.lineWidth=2.5;ctx.stroke();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.shadowColor='rgba(0,0,0,0.6)';ctx.shadowBlur=10;ctx.shadowOffsetY=2;ctx.fillText(disp,CW/2,by+bh/2);ctx.shadowBlur=0;ctx.shadowOffsetY=0;ctx.restore();}
-    ctx.font='500 15px "Space Grotesk",sans-serif';ctx.fillStyle='rgba(255,255,255,0.4)';ctx.textAlign='right';ctx.textBaseline='top';ctx.fillText(`${idx+1}/${segs.length}`,CW-32,CH*.1+4);
-    if(playing&&!ttsEnded){const now=performance.now(),dx=28,dy=CH*.1+6;for(let i=0;i<4;i++){const h=6+Math.sin(now*.008+i*1.2)*7;ctx.fillStyle=`rgba(168,85,247,${(.5+Math.sin(now*.006+i)*.3).toFixed(2)})`;ctx.fillRect(dx+i*6,dy+12-h/2,3,h);}ctx.font='500 13px "Space Grotesk",sans-serif';ctx.fillStyle='rgba(168,85,247,0.7)';ctx.textAlign='left';ctx.fillText('NARRATING',dx+30,dy+4);}
-    const tp=(idx+prog)/segs.length;ctx.fillStyle='rgba(255,255,255,0.1)';ctx.fillRect(0,CH*.925,CW,3);ctx.fillStyle='#e8913a';ctx.fillRect(0,CH*.925,CW*tp,3);
-}
-
-function animate(ts){if(!playing)return;if(!t0)t0=ts;const el=ts-t0;drawFrame(Math.min(Math.floor(el/SLIDE_MS),segs.length-1),(el%SLIDE_MS)/SLIDE_MS);animId=requestAnimationFrame(animate);}
-
-/* === Helpers === */
-function fmtBytes(b){return b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB';}
-function setBadge(type,txt){badge.className=`badge b-${type}`;const icons={idle:'fa-circle',run:'fa-bolt',voice:'fa-microphone-lines',done:'fa-check',err:'fa-triangle-exclamation',yt:'fa-upload'};badge.innerHTML=`<i class="fas ${icons[type]||'fa-circle'}" style="font-size:${type==='idle'?'.3rem':'.65rem'};${type==='run'?'animation:pulse 1.2s ease-in-out infinite;':''}"></i> ${txt}`;}
-function setStep(name,state){document.querySelectorAll('.step').forEach(s=>{s.classList.remove('active','done','err');if(s.dataset.step===name)s.classList.add(state);});}
-function updateStats(){$('statGen').textContent=stats.gen;$('statUp').textContent=stats.up;$('statFail').textContent=stats.fail;}
-function addLog(msg,type='info'){logWrap.style.display='block';const d=document.createElement('div');d.className='log-item '+type;const now=new Date();d.innerHTML=`<span class="log-time">${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}</span><span>${msg}</span>`;logEl.prepend(d);while(logEl.children.length>50)logEl.lastChild.remove();}
-let toastTimer;function toast(msg,icon='fa-check-circle',color='var(--green)'){const el=$('toast');$('tIcon').className=`fas ${icon}`;$('tIcon').style.color=color;$('tMsg').textContent=msg;el.classList.add('vis');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('vis'),4000);}
-function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
-
-/* === Unlock auto panel after sign-in === */
-function unlockAutoPanel(){
-    autoPanel.style.opacity='1';
-    autoPanel.style.pointerEvents='auto';
-    startBtn.disabled=false;
-    gateEl.classList.add('connected');
-    gateConnected.style.display='block';
-    ytSignInBtn.innerHTML='<i class="fas fa-check"></i> Connected';
-    ytSignInBtn.disabled=true;
-    ytSignInBtn.style.opacity='.6';
-    idleOv.innerHTML='<i class="fas fa-bolt" style="font-size:2.5rem;color:var(--accent);opacity:.3;margin-bottom:.7rem;"></i><p style="color:var(--muted);opacity:.5;font-size:.85rem;">Ready — click Start Auto Loop</p>';
-}
-
-/* === Gemini === */
-async function generateStory(genre){
-    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`,{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({contents:[{parts:[{text:`Write a short story in the ${genre} genre. Around 400 words. Highly visual and descriptive, perfect for narration over images. Avoid excessive dialogue. Focus on vivid descriptions, action, atmosphere, sensory details. Complete sentences with proper punctuation. Each sentence should paint a picture. Satisfying conclusion.`}]}],generationConfig:{temperature:1.3,maxOutputTokens:1024}})
-    });
-    if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||`API ${resp.status}`);}
-    const data=await resp.json();
-    const text=data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if(!text)throw new Error('Empty response');
-    return text.trim();
-}
-
-/* === Video (Promise) === */
-function generateVideoAsync(text){
-    return new Promise(async(resolve,reject)=>{
-        segs=[];imgs=[];videoBlob=null;recChunks=[];
-        if(videoUrl){URL.revokeObjectURL(videoUrl);videoUrl=null;}
-        segs=splitText(text);
-        if(!segs.length){reject(new Error('Cannot split text'));return;}
-        for(let i=0;i<segs.length;i++){
-            const seed=`s${Date.now()}${i}${Math.random().toString(36).slice(2,6)}`;
-            try{imgs.push(await loadImg(`https://picsum.photos/seed/${seed}/1280/720.jpg`));}
-            catch{const c=document.createElement('canvas');c.width=1280;c.height=720;const cx=c.getContext('2d'),hue=(i*37)%360;cx.fillStyle=`hsl(${hue},30%,18%)`;cx.fillRect(0,0,1280,720);cx.font='600 48px "Space Grotesk",sans-serif';cx.fillStyle=`hsl(${hue},40%,50%)`;cx.textAlign='center';cx.textBaseline='middle';cx.fillText(`Scene ${i+1}`,640,360);const im=new Image();im.src=c.toDataURL();await new Promise(r=>{im.onload=r;});imgs.push(im);}
+        function setBadge(type, txt) {
+            badge.className = 'badge b-' + type;
+            const icons = { idle: 'fa-circle', run: 'fa-bolt', voice: 'fa-microphone-lines', done: 'fa-check',
+                err: 'fa-triangle-exclamation', yt: 'fa-upload' };
+            badge.innerHTML =
+                `<i class="fas ${icons[type]||'fa-circle'}" style="font-size:${type==='idle'?'.3rem':'.65rem'};${type==='run'?'animation:pulse 1.2s ease-in-out infinite;':''}"></i> ${txt}`;
         }
-        try{
-            const stream=cv.captureStream(30);let mime='';
-            for(const c of ['video/webm;codecs=vp8','video/webm;codecs=vp8,opus','video/webm;codecs=vp9','video/webm']){if(MediaRecorder.isTypeSupported(c)){mime=c;break;}}
-            if(!mime)mime='video/webm';
-            recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:4000000});
-            recorder.ondataavailable=e=>{if(e.data&&e.data.size>0)recChunks.push(e.data);};
-            recorder.onstop=()=>{videoBlob=new Blob(recChunks,{type:'video/webm'});videoUrl=URL.createObjectURL(videoBlob);const fn=`${currentGenre.replace(/\s+/g,'-').toLowerCase()}-${Date.now()}.webm`;fileName.textContent=fn;fileMeta.textContent=`1280x720 · ${segs.length*2}s · ${fmtBytes(videoBlob.size)} · VP8`;fileInfo.classList.add('show');resolve(videoBlob);};
-            recorder.onerror=()=>reject(new Error('Recorder failed'));
-            recorder.start(200);
-        }catch(e){reject(e);return;}
-        utter=new SpeechSynthesisUtterance(text);utter.rate=parseFloat(speedSlider.value);utter.pitch=1;utter.lang=getLangCode();
-        const sv=getVoice();if(sv){utter.voice=sv;utter.lang=sv.lang;}
-        ttsEnded=false;playing=true;t0=0;
-        utter.onend=()=>{ttsEnded=true;if(playing){const w=SLIDE_MS-(performance.now()-t0)%SLIDE_MS+300;setTimeout(()=>{if(playing){playing=false;if(animId)cancelAnimationFrame(animId);if(recorder&&recorder.state==='recording')recorder.stop();}},w);}};
-        utter.onerror=()=>{if(playing){playing=false;if(animId)cancelAnimationFrame(animId);if(recorder&&recorder.state==='recording')recorder.stop();}reject(new Error('TTS failed'));};
-        await sleep(100);
-        speechSynthesis.speak(utter);
-        animId=requestAnimationFrame(animate);
-    });
-}
 
-/* === Upload (Promise) === */
-function uploadVideoAsync(title){
-    return new Promise((resolve,reject)=>{
-        if(!accessToken||!videoBlob){reject(new Error('Not signed in'));return;}
-        const progDiv=$('ytProgress'),progBarEl=$('ytProgBar'),progPctEl=$('ytProgPct'),progLblEl=$('ytProgLbl');
-        progDiv.classList.add('show');progBarEl.style.width='0%';progPctEl.textContent='0%';progLblEl.textContent='Reading...';
-        const metadata={snippet:{title:(($('ytTitle').value||'Short Story - ')+title).slice(0,100),description:`Generated by StoryToVideo | Genre: ${currentGenre}`,categoryId:'22'},status:{privacyStatus:$('ytPrivacy').value,selfDeclaredMadeForKids:false}};
-        const boundary='-------314159265358979323846';
-        const reader=new FileReader();
-        reader.onerror=()=>{progDiv.classList.remove('show');reject(new Error('File read failed'));};
-        reader.onload=function(){
-            progLblEl.textContent='Uploading...';
-            const enc=new TextEncoder();
-            const pre=enc.encode('--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(metadata)+'\r\n--'+boundary+'\r\nContent-Type: '+videoBlob.type+'\r\n\r\n');
-            const post=enc.encode('\r\n--'+boundary+'--\r\n');
-            const fileBytes=new Uint8Array(reader.result);
-            const body=new Uint8Array(pre.length+fileBytes.length+post.length);
-            body.set(pre,0);body.set(fileBytes,pre.length);body.set(post,pre.length+fileBytes.length);
-            const xhr=new XMLHttpRequest();
-            xhr.open('POST','https://www.googleapis.com/upload/youtube/v3/videos?uploadType=multipart&part=snippet,status');
-            xhr.setRequestHeader('Authorization','Bearer '+accessToken);
-            xhr.setRequestHeader('Content-Type','multipart/related; boundary='+boundary);
-            xhr.upload.onprogress=e=>{if(e.lengthComputable){const p=Math.round(e.loaded/e.total*100);progBarEl.style.width=p+'%';progPctEl.textContent=p+'%';progLblEl.textContent=`${fmtBytes(e.loaded)} / ${fmtBytes(e.total)}`;}};
-            xhr.onload=()=>{progDiv.classList.remove('show');if(xhr.status>=200&&xhr.status<300){let d;try{d=JSON.parse(xhr.responseText);}catch{d={};}resolve(d.id||'ok');}else{let msg=`Upload failed (${xhr.status})`;try{const e=JSON.parse(xhr.responseText);if(xhr.status===401){accessToken=null;lockAutoPanel();msg='Session expired — sign in again';}else if(e.error?.message)msg=e.error.message;}catch{}reject(new Error(msg));}};
-            xhr.onerror=()=>{progDiv.classList.remove('show');reject(new Error('Network error'));};
-            xhr.send(body.buffer);
-        };
-        reader.readAsArrayBuffer(videoBlob);
-    });
-}
+        function setStep(name, state) {
+            document.querySelectorAll('.step').forEach(s => {
+                s.classList.remove('active', 'done', 'err');
+                if (s.dataset.step === name) s.classList.add(state);
+            });
+        }
 
-/* === Lock panel back if session expires === */
-function lockAutoPanel(){
-    autoPanel.style.opacity='.4';
-    autoPanel.style.pointerEvents='none';
-    startBtn.disabled=true;
-    gateEl.classList.remove('connected');
-    gateConnected.style.display='none';
-    ytSignInBtn.innerHTML='<i class="fab fa-google"></i> Reconnect YouTube';
-    ytSignInBtn.disabled=false;
-    ytSignInBtn.style.opacity='1';
-    if(autoRunning){
-        autoRunning=false;
-        playing=false;if(animId)cancelAnimationFrame(animId);if(utter)speechSynthesis.cancel();if(recorder&&recorder.state==='recording')recorder.stop();
-        stopBtn.disabled=true;
-        setBadge('err','Session expired');
-        addLog('Session expired — sign in again to continue','err');
-        toast('Session expired — sign in again','fa-triangle-exclamation','var(--red)');
-    }
-}
+        function updateStats() {
+            $('statGen').textContent = stats.gen;
+            $('statUp').textContent = stats.up;
+            $('statFail').textContent = stats.fail;
+        }
 
-/* === YouTube Auth === */
-function initYouTube(){
-    try{
-        if(typeof google==='undefined'||!google.accounts||!google.accounts.oauth2)return;
-        tokenClient=google.accounts.oauth2.initTokenClient({
-            client_id:'699259843998-qg5t2emtfubf2gpj7hbfrdgbi3lqocl5.apps.googleusercontent.com',
-            scope:'https://www.googleapis.com/auth/youtube.upload',
-            callback:r=>{
-                if(r.access_token){
-                    accessToken=r.access_token;
-                    unlockAutoPanel();
-                    // If auto loop was waiting, resume
-                    if(autoRunning&&!playing)autoLoop();
-                }else if(r.error!=='popup_closed'){
-                    toast('Sign-in failed','fa-triangle-exclamation','var(--red)');
+        function addLog(msg, type = 'info') {
+            logWrap.style.display = 'block';
+            const d = document.createElement('div');
+            d.className = 'log-item ' + type;
+            const now = new Date();
+            d.innerHTML =
+                `<span class="log-time">${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}</span><span>${msg}</span>`;
+            logEl.prepend(d);
+            while (logEl.children.length > 50) logEl.lastChild.remove();
+        }
+
+        let toastTimer;
+
+        function toast(msg, icon = 'fa-check-circle', color = 'var(--green)') {
+            const el = $('toast');
+            $('tIcon').className = 'fas ' + icon;
+            $('tIcon').style.color = color;
+            $('tMsg').textContent = msg;
+            el.classList.add('vis');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => el.classList.remove('vis'), 4000);
+        }
+
+        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+        // ===== SETTINGS =====
+        function loadSettings() {
+            try {
+                const s = JSON.parse(localStorage.getItem('storytovideo_settings'));
+                if (s) {
+                    if (s.apiKey) apiKeyInput.value = s.apiKey;
+                    if (s.clientId) clientIdInput.value = s.clientId;
+                }
+            } catch (_) {}
+            // Show current origin
+            const origin = window.location.origin;
+            currentOriginDisplay.textContent = origin || 'http://localhost:8000';
+            // Also show in help
+            updateOriginHelp();
+            applySettings();
+        }
+
+        function saveSettings() {
+            apiKey = apiKeyInput.value.trim();
+            clientId = clientIdInput.value.trim();
+            if (!apiKey || !clientId) {
+                settingsStatusMsg.textContent = '⚠️ Both fields are required.';
+                settingsStatusMsg.style.color = '#f59e0b';
+                return;
+            }
+            localStorage.setItem('storytovideo_settings', JSON.stringify({ apiKey, clientId }));
+            settingsStatusMsg.textContent = '✅ Saved!';
+            settingsStatusMsg.style.color = 'var(--green)';
+            updateStatusUI('ready', 'Settings saved. Click "Test Connection" to verify.');
+            // Re-init OAuth with new client ID
+            initYouTube();
+            toast('Settings saved', 'fa-save', 'var(--purple)');
+        }
+
+        function applySettings() {
+            apiKey = apiKeyInput.value.trim();
+            clientId = clientIdInput.value.trim();
+        }
+
+        function updateStatusUI(state, msg) {
+            const dots = { idle: 'gray', ready: 'green', error: 'red', testing: 'yellow' };
+            statusDot.className = 'dot ' + (dots[state] || 'gray');
+            statusText.textContent = msg || '';
+        }
+
+        function updateOriginHelp() {
+            const origin = window.location.origin;
+            const code = originHelp.querySelector('code');
+            if (code) code.textContent = origin || 'http://localhost:8000';
+        }
+
+        async function testSettings() {
+            const key = apiKeyInput.value.trim();
+            if (!key) {
+                settingsStatusMsg.textContent = '❌ Please enter an API key.';
+                settingsStatusMsg.style.color = 'var(--red)';
+                return;
+            }
+            updateStatusUI('testing', 'Testing Gemini API…');
+            settingsStatusMsg.textContent = '⏳ Testing…';
+            settingsStatusMsg.style.color = '#f59e0b';
+            try {
+                const resp = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: 'Say "OK" in one word.' }] }],
+                            generationConfig: { maxOutputTokens: 10 }
+                        })
+                    });
+                if (!resp.ok) {
+                    const e = await resp.json().catch(() => ({}));
+                    throw new Error(e.error?.message || `HTTP ${resp.status}`);
+                }
+                const data = await resp.json();
+                const txt = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                if (txt.toLowerCase().includes('ok')) {
+                    updateStatusUI('ready', '✅ Gemini API works!');
+                    settingsStatusMsg.textContent = '✅ API key is valid.';
+                    settingsStatusMsg.style.color = 'var(--green)';
+                    toast('API key valid!', 'fa-check-circle', 'var(--green)');
+                } else {
+                    throw new Error('Unexpected response: ' + txt);
+                }
+            } catch (e) {
+                updateStatusUI('error', '❌ API test failed: ' + e.message);
+                settingsStatusMsg.textContent = '❌ ' + e.message;
+                settingsStatusMsg.style.color = 'var(--red)';
+                toast('API test failed', 'fa-triangle-exclamation', 'var(--red)');
+            }
+        }
+
+        // ===== VOICE =====
+        function getLangCode() { return langSel.value === 'hi' ? 'hi-IN' : 'en-US'; }
+
+        function loadVoices() {
+            const all = speechSynthesis.getVoices();
+            if (!all.length) return;
+            const p = langSel.value,
+                lv = all.filter(v => v.lang.startsWith(p)),
+                ov = all.filter(v => !v.lang.startsWith(p));
+            voiceSel.innerHTML = '';
+            [...lv, ...ov].forEach(v => {
+                const o = document.createElement('option');
+                o.value = all.indexOf(v);
+                const isL = v.lang.startsWith(p);
+                o.textContent = `${v.name}${isL?'':' ['+v.lang+']'}${v.localService?'':' (online)'}`;
+                if (!isL) o.style.color = 'var(--muted)';
+                voiceSel.appendChild(o);
+            });
+            const b = lv.findIndex(v => v.name.toLowerCase().includes('google'));
+            if (b >= 0 && lv[b]) voiceSel.value = all.indexOf(lv[b]);
+            else if (lv.length) voiceSel.value = all.indexOf(lv[0]);
+            voiceHint.textContent = lv.length ? lv.length + ' voices' : 'No voices for language';
+            voiceHint.style.color = lv.length ? 'var(--muted)' : '#f59e0b';
+            previewVoiceBtn.disabled = true;
+        }
+        speechSynthesis.onvoiceschanged = loadVoices;
+        loadVoices();
+        langSel.addEventListener('change', loadVoices);
+        speedSlider.addEventListener('input', () => { speedVal.textContent = parseFloat(speedSlider.value).toFixed(1); });
+
+        function getVoice() { const v = speechSynthesis.getVoices(); return v[parseInt(voiceSel.value)] || v[0] || null; }
+        previewVoiceBtn.addEventListener('click', () => {
+            speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance('Hello, this is a voice preview.');
+            u.voice = getVoice();
+            u.rate = parseFloat(speedSlider.value);
+            u.pitch = 1;
+            u.lang = getLangCode();
+            u.onend = u.onerror = () => {};
+            speechSynthesis.speak(u);
+        });
+
+        // ===== TEXT SPLIT =====
+        function splitText(text) {
+            const out = [],
+                sents = text.match(/[^.!?।]+[.!?।]+/g) || [text];
+            for (const s of sents) {
+                const w = s.trim().split(/\s+/).filter(Boolean);
+                if (w.length <= WPS) { if (w.length) out.push(w.join(' ')); continue; }
+                const parts = s.split(/[,;،]/);
+                let buf = '';
+                for (const p of parts) {
+                    const pw = p.trim().split(/\s+/).filter(Boolean).length;
+                    const bw = buf ? buf.split(/\s+/).filter(Boolean).length : 0;
+                    if (bw + pw > WPS && buf) { out.push(buf.trim());
+                        buf = p; } else { buf += (buf ? ' ' : '') + p; }
+                    if (buf.split(/\s+/).filter(Boolean).length >= WPS) { out.push(buf.trim());
+                        buf = ''; }
+                }
+                if (buf) {
+                    const rw = buf.trim().split(/\s+/).filter(Boolean);
+                    for (let i = 0; i < rw.length; i += WPS) out.push(rw.slice(i, i + WPS).join(' '));
                 }
             }
-        });
-    }catch(e){}
-}
-ytSignInBtn.addEventListener('click',()=>{if(tokenClient)tokenClient.requestAccessToken();else toast('Google Sign-In not loaded','fa-triangle-exclamation','#f59e0b');});
-window.addEventListener('load',()=>{setTimeout(initYouTube,500);});
-
-/* === Auto Loop === */
-function pickGenre(){return GENRES[Math.floor(Math.random()*GENRES.length)];}
-
-async function autoLoop(){
-    while(autoRunning){
-        currentGenre=pickGenre();
-        genreDisplay.textContent=currentGenre;
-        storyPreview.style.display='none';
-        setStep('story','active');setStep('images','');setStep('record','');setStep('upload','');
-        setBadge('run',`Generating ${currentGenre}...`);
-        addLog(`Starting: ${currentGenre}`,'info');
-
-        let story='';
-        try{
-            story=await generateStory(currentGenre);
-            storyTa.value=story;storyPreview.style.display='block';
-            addLog(`${currentGenre}: Story ready (${story.split(/\s+/).length} words)`,'ok');
-            setStep('story','done');
-        }catch(e){
-            stats.fail++;stats.consecFail++;updateStats();setStep('story','err');
-            addLog(`${currentGenre}: Story failed — ${e.message}`,'err');
-            if(stats.consecFail>=5){addLog('5 consecutive fails, waiting 15s...','warn');await sleep(15000);stats.consecFail=0;}
-            else await sleep(3000);
-            if(!autoRunning)break;
-            continue;
+            return out.filter(s => s.trim().length > 0);
         }
-        if(!autoRunning)break;
-        stats.consecFail=0;
 
-        setStep('images','active');setStep('record','active');
-        setBadge('run',`Creating ${currentGenre} video...`);
-        idleOv.style.opacity='0';
-        try{
-            await generateVideoAsync(story);
-            stats.gen++;updateStats();
-            addLog(`${currentGenre}: Video recorded (${fmtBytes(videoBlob.size)})`,'ok');
-            setStep('images','done');setStep('record','done');
-        }catch(e){
-            stats.fail++;stats.consecFail++;updateStats();setStep('record','err');
-            addLog(`${currentGenre}: Video failed — ${e.message}`,'err');
-            playing=false;if(animId)cancelAnimationFrame(animId);if(utter)speechSynthesis.cancel();if(recorder&&recorder.state==='recording')recorder.stop();
-            if(stats.consecFail>=5){addLog('5 consecutive fails, waiting 15s...','warn');await sleep(15000);stats.consecFail=0;}
-            else await sleep(3000);
-            if(!autoRunning)break;
-            continue;
+        // ===== IMAGE =====
+        function loadImg(url) {
+            return new Promise((res, rej) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => res(img);
+                img.onerror = () => {
+                    const i2 = new Image();
+                    i2.crossOrigin = 'anonymous';
+                    i2.onload = () => res(i2);
+                    i2.onerror = rej;
+                    i2.src = url.replace(/seed\/[^/]+/, `seed/r${Math.random().toString(36).slice(2,8)}`);
+                };
+                img.src = url;
+            });
         }
-        if(!autoRunning)break;
 
-        setStep('upload','active');setBadge('yt','Uploading...');
-        try{
-            const vidId=await uploadVideoAsync(currentGenre);
-            stats.up++;updateStats();
-            addLog(`${currentGenre}: Uploaded — youtube.com/watch?v=${vidId}`,'ok');
-            setStep('upload','done');
-            toast(`Uploaded: ${currentGenre}`,'fa-check-circle','var(--green)');
-        }catch(e){
-            addLog(`${currentGenre}: Upload failed — ${e.message}`,'err');
-            setStep('upload','err');
-            if(e.message.includes('Session expired')||e.message.includes('401')){
-                lockAutoPanel();
-                break;
+        // ===== KEN BURNS =====
+        const KB = [
+            { sS: 1, eS: 1.16, sX: 0, sY: 0, eX: -.04, eY: -.04 },
+            { sS: 1.12, eS: 1, sX: -.04, sY: 0, eX: 0, eY: 0 },
+            { sS: 1, eS: 1.14, sX: 0, sY: -.03, eX: -.03, eY: .01 },
+            { sS: 1.1, eS: 1, sX: .03, sY: 0, eX: -.01, eY: -.03 },
+            { sS: 1, eS: 1.18, sX: -.02, sY: -.02, eX: .01, eY: .01 },
+            { sS: 1.06, eS: 1.14, sX: .02, sY: -.01, eX: -.02, eY: .02 }
+        ];
+
+        function getKB(i) { return KB[i % KB.length]; }
+
+        function drawCover(img, sc, ox, oy, a) {
+            const ir = img.width / img.height,
+                cr = CW / CH;
+            let dw, dh;
+            if (ir > cr) { dh = CH * sc;
+                dw = dh * ir; } else { dw = CW * sc;
+                dh = dw / ir; }
+            ctx.save();
+            ctx.globalAlpha = a;
+            ctx.drawImage(img, (CW - dw) / 2 + ox * CW, (CH - dh) / 2 + oy * CH, dw, dh);
+            ctx.restore();
+        }
+
+        function drawFrame(idx, prog) {
+            if (idx >= imgs.length) return;
+            const img = imgs[idx],
+                kb = getKB(idx);
+            const t = prog < .5 ? 2 * prog * prog : 1 - Math.pow(-2 * prog + 2, 2) / 2;
+            const sc = kb.sS + (kb.eS - kb.sS) * t,
+                ox = kb.sX + (kb.eX - kb.sX) * t,
+                oy = kb.sY + (kb.eY - kb.sY) * t;
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, CW, CH);
+            if (idx > 0 && prog < TRANS_MS / SLIDE_MS) {
+                const fp = prog / (TRANS_MS / SLIDE_MS),
+                    pk = getKB(idx - 1);
+                drawCover(imgs[idx - 1], pk.eS, pk.eX, pk.eY, 1 - fp);
+                drawCover(img, sc, ox, oy, fp);
+            } else {
+                drawCover(img, sc, ox, oy, 1);
+            }
+            ctx.fillStyle = 'rgba(232,145,58,0.04)';
+            ctx.fillRect(0, 0, CW, CH);
+            ctx.fillStyle = 'rgba(0,0,0,0.12)';
+            ctx.fillRect(0, 0, CW, CH);
+            const vig = ctx.createRadialGradient(CW / 2, CH / 2, CW * .28, CW / 2, CH / 2, CW * .78);
+            vig.addColorStop(0, 'rgba(0,0,0,0)');
+            vig.addColorStop(1, 'rgba(0,0,0,0.55)');
+            ctx.fillStyle = vig;
+            ctx.fillRect(0, 0, CW, CH);
+            if (segs[idx]) {
+                const txt = segs[idx],
+                    alpha = Math.min(Math.min(1, prog * 5), Math.min(1, (1 - prog) * 5));
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.font = '600 28px "Space Grotesk",sans-serif';
+                let disp = txt;
+                while (ctx.measureText(disp).width > CW - 152 && disp.length > 8) disp = disp.slice(0, -1);
+                if (disp !== txt) disp += '…';
+                const tw = ctx.measureText(disp).width,
+                    pad = 36,
+                    bw = Math.min(tw + pad * 2, CW - 80),
+                    bh = 54,
+                    bx = (CW - bw) / 2,
+                    by = CH * .82,
+                    r = 12;
+                ctx.beginPath();
+                ctx.moveTo(bx + r, by);
+                ctx.lineTo(bx + bw - r, by);
+                ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + r);
+                ctx.lineTo(bx + bw, by + bh - r);
+                ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - r, by + bh);
+                ctx.lineTo(bx + r, by + bh);
+                ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - r);
+                ctx.lineTo(bx, by + r);
+                ctx.quadraticCurveTo(bx, by, bx + r, by);
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(0,0,0,0.72)';
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(bx + r, by);
+                ctx.lineTo(bx + bw - r, by);
+                ctx.strokeStyle = 'rgba(232,145,58,0.85)';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+                ctx.fillStyle = '#fff';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(0,0,0,0.6)';
+                ctx.shadowBlur = 10;
+                ctx.shadowOffsetY = 2;
+                ctx.fillText(disp, CW / 2, by + bh / 2);
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
+                ctx.restore();
+            }
+            ctx.font = '500 15px "Space Grotesk",sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'top';
+            ctx.fillText(`${idx+1}/${segs.length}`, CW - 32, CH * .1 + 4);
+            if (playing && !ttsEnded) {
+                const now = performance.now(),
+                    dx = 28,
+                    dy = CH * .1 + 6;
+                for (let i = 0; i < 4; i++) {
+                    const h = 6 + Math.sin(now * .008 + i * 1.2) * 7;
+                    ctx.fillStyle = `rgba(168,85,247,${(.5+Math.sin(now*.006+i)*.3).toFixed(2)})`;
+                    ctx.fillRect(dx + i * 6, dy + 12 - h / 2, 3, h);
+                }
+                ctx.font = '500 13px "Space Grotesk",sans-serif';
+                ctx.fillStyle = 'rgba(168,85,247,0.7)';
+                ctx.textAlign = 'left';
+                ctx.fillText('NARRATING', dx + 30, dy + 4);
+            }
+            const tp = (idx + prog) / segs.length;
+            ctx.fillStyle = 'rgba(255,255,255,0.1)';
+            ctx.fillRect(0, CH * .925, CW, 3);
+            ctx.fillStyle = '#e8913a';
+            ctx.fillRect(0, CH * .925, CW * tp, 3);
+        }
+
+        function animate(ts) {
+            if (!playing) return;
+            if (!t0) t0 = ts;
+            const el = ts - t0;
+            drawFrame(Math.min(Math.floor(el / SLIDE_MS), segs.length - 1), (el % SLIDE_MS) / SLIDE_MS);
+            animId = requestAnimationFrame(animate);
+        }
+
+        // ===== UNLOCK AUTO PANEL =====
+        function unlockAutoPanel() {
+            autoPanel.style.opacity = '1';
+            autoPanel.style.pointerEvents = 'auto';
+            startBtn.disabled = false;
+            gateEl.classList.add('connected');
+            gateConnected.style.display = 'block';
+            ytSignInBtn.innerHTML = '<i class="fas fa-check"></i> Connected';
+            ytSignInBtn.disabled = true;
+            ytSignInBtn.style.opacity = '.6';
+            idleOv.innerHTML =
+                '<i class="fas fa-bolt" style="font-size:2.5rem;color:var(--accent);opacity:.3;margin-bottom:.7rem;"></i><p style="color:var(--muted);opacity:.5;font-size:.85rem;">Ready — click Start Auto Loop</p>';
+        }
+
+        function lockAutoPanel() {
+            autoPanel.style.opacity = '.4';
+            autoPanel.style.pointerEvents = 'none';
+            startBtn.disabled = true;
+            gateEl.classList.remove('connected');
+            gateConnected.style.display = 'none';
+            ytSignInBtn.innerHTML = '<i class="fab fa-google"></i> Reconnect YouTube';
+            ytSignInBtn.disabled = false;
+            ytSignInBtn.style.opacity = '1';
+            if (autoRunning) {
+                autoRunning = false;
+                playing = false;
+                if (animId) cancelAnimationFrame(animId);
+                if (utter) speechSynthesis.cancel();
+                if (recorder && recorder.state === 'recording') recorder.stop();
+                stopBtn.disabled = true;
+                setBadge('err', 'Session expired');
+                addLog('Session expired — sign in again', 'err');
+                toast('Session expired — sign in again', 'fa-triangle-exclamation', 'var(--red)');
             }
         }
-        setBadge('done','Cycle complete');
-        addLog('—','info');
-        await sleep(2000);
-    }
-}
 
-/* === Controls === */
-startBtn.addEventListener('click',()=>{
-    autoRunning=true;stats.consecFail=0;
-    startBtn.disabled=true;stopBtn.disabled=false;
-    logEl.innerHTML='';logWrap.style.display='block';
-    updateStats();
-    addLog('Auto loop started','ok');
-    toast('Auto loop started','fa-bolt','var(--accent)');
-    autoLoop();
-});
+        // ===== GEMINI =====
+        async function generateStory(genre) {
+            const key = apiKeyInput.value.trim();
+            if (!key) throw new Error('API key not set. Please configure in Settings.');
+            const resp = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text:
+                                    `Write a short story in the ${genre} genre. Around 400 words. Highly visual and descriptive, perfect for narration over images. Avoid excessive dialogue. Focus on vivid descriptions, action, atmosphere, sensory details. Complete sentences with proper punctuation. Each sentence should paint a picture. Satisfying conclusion.`
+                                }] }],
+                        generationConfig: { temperature: 1.3, maxOutputTokens: 1024 }
+                    })
+                });
+            if (!resp.ok) {
+                const e = await resp.json().catch(() => ({}));
+                throw new Error(e.error?.message || `API ${resp.status}`);
+            }
+            const data = await resp.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!text) throw new Error('Empty response');
+            return text.trim();
+        }
 
-stopBtn.addEventListener('click',()=>{
-    autoRunning=false;
-    playing=false;if(animId)cancelAnimationFrame(animId);if(utter)speechSynthesis.cancel();if(recorder&&recorder.state==='recording')recorder.stop();
-    startBtn.disabled=false;stopBtn.disabled=true;
-    setBadge('idle','Stopped');setStep('story','');setStep('images','');setStep('record','');setStep('upload','');
-    genreDisplay.textContent='—';
-    idleOv.innerHTML='<i class="fas fa-bolt" style="font-size:2.5rem;color:var(--accent);opacity:.3;margin-bottom:.7rem;"></i><p style="color:var(--muted);opacity:.5;font-size:.85rem;">Paused — click Start to resume</p>';
-    idleOv.style.opacity='1';
-    addLog('Stopped by user','warn');
-    toast('Stopped','fa-stop-circle','#f59e0b');
-});
+        // ===== VIDEO GENERATION =====
+        function generateVideoAsync(text) {
+            return new Promise(async (resolve, reject) => {
+                segs = [];
+                imgs = [];
+                videoBlob = null;
+                recChunks = [];
+                if (videoUrl) { URL.revokeObjectURL(videoUrl);
+                    videoUrl = null; }
+                segs = splitText(text);
+                if (!segs.length) { reject(new Error('Cannot split text')); return; }
+                for (let i = 0; i < segs.length; i++) {
+                    const seed = `s${Date.now()}${i}${Math.random().toString(36).slice(2,6)}`;
+                    try {
+                        imgs.push(await loadImg(`https://picsum.photos/seed/${seed}/1280/720.jpg`));
+                    } catch {
+                        const c = document.createElement('canvas');
+                        c.width = 1280;
+                        c.height = 720;
+                        const cx = c.getContext('2d'),
+                            hue = (i * 37) % 360;
+                        cx.fillStyle = `hsl(${hue},30%,18%)`;
+                        cx.fillRect(0, 0, 1280, 720);
+                        cx.font = '600 48px "Space Grotesk",sans-serif';
+                        cx.fillStyle = `hsl(${hue},40%,50%)`;
+                        cx.textAlign = 'center';
+                        cx.textBaseline = 'middle';
+                        cx.fillText(`Scene ${i+1}`, 640, 360);
+                        const im = new Image();
+                        im.src = c.toDataURL();
+                        await new Promise(r => { im.onload = r; });
+                        imgs.push(im);
+                    }
+                }
+                try {
+                    const stream = cv.captureStream(30);
+                    let mime = '';
+                    for (const c of ['video/webm;codecs=vp8', 'video/webm;codecs=vp8,opus', 'video/webm;codecs=vp9',
+                            'video/webm'
+                        ]) {
+                        if (MediaRecorder.isTypeSupported(c)) { mime = c; break; }
+                    }
+                    if (!mime) mime = 'video/webm';
+                    recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4000000 });
+                    recorder.ondataavailable = e => { if (e.data && e.data.size > 0) recChunks.push(e.data); };
+                    recorder.onstop = () => {
+                        videoBlob = new Blob(recChunks, { type: 'video/webm' });
+                        videoUrl = URL.createObjectURL(videoBlob);
+                        const fn =
+                            `${currentGenre.replace(/\s+/g,'-').toLowerCase()}-${Date.now()}.webm`;
+                        fileName.textContent = fn;
+                        fileMeta.textContent =
+                            `1280x720 · ${segs.length*2}s · ${fmtBytes(videoBlob.size)} · VP8`;
+                        fileInfo.classList.add('show');
+                        resolve(videoBlob);
+                    };
+                    recorder.onerror = () => reject(new Error('Recorder failed'));
+                    recorder.start(200);
+                } catch (e) { reject(e); return; }
+                utter = new SpeechSynthesisUtterance(text);
+                utter.rate = parseFloat(speedSlider.value);
+                utter.pitch = 1;
+                utter.lang = getLangCode();
+                const sv = getVoice();
+                if (sv) { utter.voice = sv;
+                    utter.lang = sv.lang; }
+                ttsEnded = false;
+                playing = true;
+                t0 = 0;
+                utter.onend = () => {
+                    ttsEnded = true;
+                    if (playing) {
+                        const w = SLIDE_MS - (performance.now() - t0) % SLIDE_MS + 300;
+                        setTimeout(() => {
+                            if (playing) {
+                                playing = false;
+                                if (animId) cancelAnimationFrame(animId);
+                                if (recorder && recorder.state === 'recording') recorder.stop();
+                            }
+                        }, w);
+                    }
+                };
+                utter.onerror = () => {
+                    if (playing) {
+                        playing = false;
+                        if (animId) cancelAnimationFrame(animId);
+                        if (recorder && recorder.state === 'recording') recorder.stop();
+                    }
+                    reject(new Error('TTS failed'));
+                };
+                await sleep(100);
+                speechSynthesis.speak(utter);
+                animId = requestAnimationFrame(animate);
+            });
+        }
 
-// Idle canvas
-ctx.fillStyle='#080706';ctx.fillRect(0,0,CW,CH);
-const ig=ctx.createRadialGradient(CW/2,CH/2,0,CW/2,CH/2,CW*.45);
-ig.addColorStop(0,'rgba(232,145,58,0.035)');ig.addColorStop(1,'rgba(0,0,0,0)');
-ctx.fillStyle=ig;ctx.fillRect(0,0,CW,CH);
-</script>
+        // ===== UPLOAD =====
+        function uploadVideoAsync(title) {
+            return new Promise((resolve, reject) => {
+                if (!accessToken || !videoBlob) { reject(new Error('Not signed in')); return; }
+                const progDiv = $('ytProgress'),
+                    progBarEl = $('ytProgBar'),
+                    progPctEl = $('ytProgPct'),
+                    progLblEl = $('ytProgLbl');
+                progDiv.classList.add('show');
+                progBarEl.style.width = '0%';
+                progPctEl.textContent = '0%';
+                progLblEl.textContent = 'Reading…';
+                const metadata = {
+                    snippet: {
+                        title: (($('ytTitle').value || 'Short Story - ') + title).slice(0, 100),
+                        description: `Generated by StoryToVideo | Genre: ${currentGenre}`,
+                        categoryId: '22'
+                    },
+                    status: { privacyStatus: $('ytPrivacy').value, selfDeclaredMadeForKids: false }
+                };
+                const boundary = '-------314159265358979323846';
+                const reader = new FileReader();
+                reader.onerror = () => { progDiv.classList.remove('show');
+                    reject(new Error('File read failed')); };
+                reader.onload = function() {
+                    progLblEl.textContent = 'Uploading…';
+                    const enc = new TextEncoder();
+                    const pre = enc.encode('--' + boundary +
+                        '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + JSON.stringify(
+                        metadata) + '\r\n--' + boundary +
+                        '\r\nContent-Type: ' + videoBlob.type + '\r\n\r\n');
+                    const post = enc.encode('\r\n--' + boundary + '--\r\n');
+                    const fileBytes = new Uint8Array(reader.result);
+                    const body = new Uint8Array(pre.length + fileBytes.length + post.length);
+                    body.set(pre, 0);
+                    body.set(fileBytes, pre.length);
+                    body.set(post, pre.length + fileBytes.length);
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST',
+                        'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=multipart&part=snippet,status'
+                        );
+                    xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+                    xhr.setRequestHeader('Content-Type', 'multipart/related; boundary=' + boundary);
+                    xhr.upload.onprogress = e => {
+                        if (e.lengthComputable) {
+                            const p = Math.round(e.loaded / e.total * 100);
+                            progBarEl.style.width = p + '%';
+                            progPctEl.textContent = p + '%';
+                            progLblEl.textContent = `${fmtBytes(e.loaded)} / ${fmtBytes(e.total)}`;
+                        }
+                    };
+                    xhr.onload = () => {
+                        progDiv.classList.remove('show');
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            let d;
+                            try { d = JSON.parse(xhr.responseText); } catch { d = {}; }
+                            resolve(d.id || 'ok');
+                        } else {
+                            let msg = `Upload failed (${xhr.status})`;
+                            try {
+                                const e = JSON.parse(xhr.responseText);
+                                if (xhr.status === 401) {
+                                    accessToken = null;
+                                    lockAutoPanel();
+                                    msg = 'Session expired — sign in again';
+                                } else if (e.error?.message) msg = e.error.message;
+                            } catch {}
+                            reject(new Error(msg));
+                        }
+                    };
+                    xhr.onerror = () => { progDiv.classList.remove('show');
+                        reject(new Error('Network error')); };
+                    xhr.send(body.buffer);
+                };
+                reader.readAsArrayBuffer(videoBlob);
+            });
+        }
+
+        // ===== YOUTUBE AUTH =====
+        function initYouTube() {
+            try {
+                const cid = clientIdInput.value.trim();
+                if (!cid) {
+                    updateStatusUI('idle', 'Enter a Client ID in Settings.');
+                    return;
+                }
+                if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+                    setTimeout(initYouTube, 500);
+                    return;
+                }
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: cid,
+                    scope: 'https://www.googleapis.com/auth/youtube.upload',
+                    callback: r => {
+                        if (r.access_token) {
+                            accessToken = r.access_token;
+                            unlockAutoPanel();
+                            updateStatusUI('ready', '✅ YouTube connected');
+                            toast('YouTube connected!', 'fa-check-circle', 'var(--green)');
+                        } else if (r.error === 'popup_closed') {
+                            // user closed popup — ignore
+                        } else {
+                            toast('Sign-in failed: ' + (r.error || 'unknown'), 'fa-triangle-exclamation',
+                                'var(--red)');
+                            updateStatusUI('error', '❌ Sign-in failed: ' + (r.error || 'unknown'));
+                        }
+                    }
+                });
+                updateStatusUI('ready', 'OAuth client ready. Click "Sign in with Google".');
+            } catch (e) {
+                updateStatusUI('error', '❌ OAuth init error: ' + e.message);
+            }
+        }
+
+        ytSignInBtn.addEventListener('click', () => {
+            if (tokenClient) {
+                tokenClient.requestAccessToken();
+            } else {
+                const cid = clientIdInput.value.trim();
+                if (!cid) {
+                    toast('Set Client ID in Settings first', 'fa-triangle-exclamation', '#f59e0b');
+                    return;
+                }
+                initYouTube();
+                setTimeout(() => {
+                    if (tokenClient) tokenClient.requestAccessToken();
+                    else toast('OAuth not ready — try again', 'fa-triangle-exclamation', '#f59e0b');
+                }, 600);
+            }
+        });
+
+        // ===== AUTO LOOP =====
+        function pickGenre() { return GENRES[Math.floor(Math.random() * GENRES.length)]; }
+
+        async function autoLoop() {
+            while (autoRunning) {
+                currentGenre = pickGenre();
+                genreDisplay.textContent = currentGenre;
+                storyPreview.style.display = 'none';
+                setStep('story', 'active');
+                setStep('images', '');
+                setStep('record', '');
+                setStep('upload', '');
+                setBadge('run', `Generating ${currentGenre}…`);
+                addLog(`Starting: ${currentGenre}`, 'info');
+
+                let story = '';
+                try {
+                    story = await generateStory(currentGenre);
+                    storyTa.value = story;
+                    storyPreview.style.display = 'block';
+                    addLog(`${currentGenre}: Story ready (${story.split(/\s+/).length} words)`, 'ok');
+                    setStep('story', 'done');
+                } catch (e) {
+                    stats.fail++;
+                    stats.consecFail++;
+                    updateStats();
+                    setStep('story', 'err');
+                    addLog(`${currentGenre}: Story failed — ${e.message}`, 'err');
+                    if (stats.consecFail >= 5) { addLog('5 consecutive fails, waiting 15s…', 'warn');
+                        await sleep(15000);
+                        stats.consecFail = 0; } else await sleep(3000);
+                    if (!autoRunning) break;
+                    continue;
+                }
+                if (!autoRunning) break;
+                stats.consecFail = 0;
+
+                setStep('images', 'active');
+                setStep('record', 'active');
+                setBadge('run', `Creating ${currentGenre} video…`);
+                idleOv.style.opacity = '0';
+                try {
+                    await generateVideoAsync(story);
+                    stats.gen++;
+                    updateStats();
+                    addLog(`${currentGenre}: Video recorded (${fmtBytes(videoBlob.size)})`, 'ok');
+                    setStep('images', 'done');
+                    setStep('record', 'done');
+                } catch (e) {
+                    stats.fail++;
+                    stats.consecFail++;
+                    updateStats();
+                    setStep('record', 'err');
+                    addLog(`${currentGenre}: Video failed — ${e.message}`, 'err');
+                    playing = false;
+                    if (animId) cancelAnimationFrame(animId);
+                    if (utter) speechSynthesis.cancel();
+                    if (recorder && recorder.state === 'recording') recorder.stop();
+                    if (stats.consecFail >= 5) { addLog('5 consecutive fails, waiting 15s…', 'warn');
+                        await sleep(15000);
+                        stats.consecFail = 0; } else await sleep(3000);
+                    if (!autoRunning) break;
+                    continue;
+                }
+                if (!autoRunning) break;
+
+                setStep('upload', 'active');
+                setBadge('yt', 'Uploading…');
+                try {
+                    const vidId = await uploadVideoAsync(currentGenre);
+                    stats.up++;
+                    updateStats();
+                    addLog(`${currentGenre}: Uploaded — youtube.com/watch?v=${vidId}`, 'ok');
+                    setStep('upload', 'done');
+                    toast(`Uploaded: ${currentGenre}`, 'fa-check-circle', 'var(--green)');
+                } catch (e) {
+                    addLog(`${currentGenre}: Upload failed — ${e.message}`, 'err');
+                    setStep('upload', 'err');
+                    if (e.message.includes('Session expired') || e.message.includes('401')) {
+                        lockAutoPanel();
+                        break;
+                    }
+                }
+                setBadge('done', 'Cycle complete');
+                addLog('—', 'info');
+                await sleep(2000);
+            }
+        }
+
+        // ===== CONTROLS =====
+        startBtn.addEventListener('click', () => {
+            const key = apiKeyInput.value.trim();
+            if (!key) {
+                toast('Set API key in Settings first', 'fa-triangle-exclamation', '#f59e0b');
+                return;
+            }
+            if (!accessToken) {
+                toast('Sign in with YouTube first', 'fa-triangle-exclamation', '#f59e0b');
+                return;
+            }
+            autoRunning = true;
+            stats.consecFail = 0;
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            logEl.innerHTML = '';
+            logWrap.style.display = 'block';
+            updateStats();
+            addLog('Auto loop started', 'ok');
+            toast('Auto loop started', 'fa-bolt', 'var(--accent)');
+            autoLoop();
+        });
+
+        stopBtn.addEventListener('click', () => {
+            autoRunning = false;
+            playing = false;
+            if (animId) cancelAnimationFrame(animId);
+            if (utter) speechSynthesis.cancel();
+            if (recorder && recorder.state === 'recording') recorder.stop();
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            setBadge('idle', 'Stopped');
+            setStep('story', '');
+            setStep('images', '');
+            setStep('record', '');
+            setStep('upload', '');
+            genreDisplay.textContent = '—';
+            idleOv.innerHTML =
+                '<i class="fas fa-bolt" style="font-size:2.5rem;color:var(--accent);opacity:.3;margin-bottom:.7rem;"></i><p style="color:var(--muted);opacity:.5;font-size:.85rem;">Paused — click Start to resume</p>';
+            idleOv.style.opacity = '1';
+            addLog('Stopped by user', 'warn');
+            toast('Stopped', 'fa-stop-circle', '#f59e0b');
+        });
+
+        // ===== SETTINGS EVENT =====
+        saveSettingsBtn.addEventListener('click', saveSettings);
+        testSettingsBtn.addEventListener('click', testSettings);
+
+        // ===== INIT =====
+        loadSettings();
+
+        // Idle canvas
+        ctx.fillStyle = '#080706';
+        ctx.fillRect(0, 0, CW, CH);
+        const ig = ctx.createRadialGradient(CW / 2, CH / 2, 0, CW / 2, CH / 2, CW * .45);
+        ig.addColorStop(0, 'rgba(232,145,58,0.035)');
+        ig.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = ig;
+        ctx.fillRect(0, 0, CW, CH);
+
+        // Auto-init OAuth after settings load
+        setTimeout(() => {
+            const cid = clientIdInput.value.trim();
+            if (cid) initYouTube();
+            updateOriginHelp();
+        }, 800);
+
+        // Re-check origin on resize
+        window.addEventListener('resize', updateOriginHelp);
+    </script>
 </body>
 </html>

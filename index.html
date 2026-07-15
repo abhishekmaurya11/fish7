@@ -106,7 +106,7 @@
             align-items: center;
             gap: 12px;
             flex-wrap: wrap;
-            margin-bottom: 18px;
+            margin-bottom: 12px;
             padding: 12px 16px;
             background: #1a1715;
             border-radius: 12px;
@@ -198,6 +198,51 @@
                 margin-left: 0;
                 width: 100%;
                 justify-content: flex-start;
+            }
+        }
+
+        /* progress bar */
+        .progress-wrap {
+            margin: 8px 0 14px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 0 2px;
+        }
+        .progress-track {
+            flex: 1;
+            height: 5px;
+            background: #2a2520;
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e8913a, #f0a050);
+            border-radius: 3px;
+            width: 0%;
+            transition: width .25s ease;
+        }
+        .progress-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #7a7268;
+            min-width: 48px;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: .2px;
+        }
+        .progress-sub {
+            font-size: 10px;
+            color: #4a4440;
+            min-width: 80px;
+            text-align: left;
+            font-weight: 400;
+        }
+        @media (max-width: 420px) {
+            .progress-sub {
+                display: none;
             }
         }
 
@@ -534,6 +579,7 @@
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
+            align-items: center;
         }
         .settings .actions .btn-sm {
             padding: 6px 16px;
@@ -732,7 +778,6 @@
             }
         }
 
-        /* responsive tweaks */
         @media (max-width: 480px) {
             .app {
                 padding: 14px 12px 18px;
@@ -761,6 +806,9 @@
             .settings .row .field {
                 min-width: 120px;
             }
+            .progress-sub {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -772,7 +820,7 @@
         <div class="header">
             <div class="logo"><i class="fas fa-clapperboard"></i></div>
             <h1>StoryToVideo <span>Auto</span></h1>
-            <div class="sub"><i class="fas fa-circle" style="color:#22c55e;font-size:8px;"></i> v2.0</div>
+            <div class="sub"><i class="fas fa-circle" style="color:#22c55e;font-size:8px;"></i> v2.1</div>
         </div>
 
         <!-- status row -->
@@ -785,6 +833,15 @@
                 <span><i class="fab fa-youtube" style="color:#ef4444;"></i> <span class="num red" id="statUp">0</span></span>
                 <span><i class="fas fa-triangle-exclamation" style="color:#f59e0b;"></i> <span class="num" id="statFail" style="color:#f59e0b;">0</span></span>
             </div>
+        </div>
+
+        <!-- progress bar -->
+        <div class="progress-wrap">
+            <div class="progress-track">
+                <div class="progress-fill" id="progressFill" style="width:0%;"></div>
+            </div>
+            <div class="progress-label" id="progressLabel">0%</div>
+            <div class="progress-sub" id="progressSub">Ready</div>
         </div>
 
         <!-- canvas -->
@@ -898,7 +955,7 @@
                     </div>
                 </div>
 
-                <!-- upload progress -->
+                <!-- upload progress (detailed) -->
                 <div id="ytProgress" style="display:none;margin-top:6px;">
                     <div style="display:flex;justify-content:space-between;font-size:11px;color:#7a7268;margin-bottom:2px;">
                         <span id="ytProgLbl">Uploading…</span>
@@ -980,6 +1037,11 @@
             tIcon = $('tIcon'),
             tMsg = $('tMsg');
 
+        // Progress elements
+        const progressFill = $('progressFill');
+        const progressLabel = $('progressLabel');
+        const progressSub = $('progressSub');
+
         // ============================================================
         //  STATE
         // ============================================================
@@ -1000,6 +1062,7 @@
             currentGenre = '';
         let stats = { gen: 0, up: 0, fail: 0, consecFail: 0 };
         let toastTimer = null;
+        let lastProgressPct = -1;
 
         // ============================================================
         //  HELPERS
@@ -1052,6 +1115,21 @@
             toastEl.classList.add('show');
             clearTimeout(toastTimer);
             toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3500);
+        }
+
+        // ============================================================
+        //  PROGRESS UPDATE
+        // ============================================================
+        function updateProgress(pct, label, sub) {
+            const clamped = Math.min(100, Math.max(0, pct));
+            const intPct = Math.round(clamped);
+            if (intPct !== lastProgressPct) {
+                progressFill.style.width = intPct + '%';
+                progressLabel.textContent = intPct + '%';
+                lastProgressPct = intPct;
+            }
+            if (label) progressLabel.textContent = label;
+            if (sub !== undefined) progressSub.textContent = sub;
         }
 
         // ============================================================
@@ -1354,6 +1432,13 @@
             ctx.fillRect(0, CH * .925, CW, 3);
             ctx.fillStyle = '#e8913a';
             ctx.fillRect(0, CH * .925, CW * tp, 3);
+
+            // Update global progress during recording (10% to 80%)
+            if (playing && segs.length > 0) {
+                const pct = 10 + ((idx + prog) / segs.length) * 70;
+                const sub = `Narrating ${idx+1}/${segs.length}`;
+                updateProgress(pct, Math.round(pct) + '%', sub);
+            }
         }
 
         function animate(ts) {
@@ -1468,6 +1553,9 @@
                     videoUrl = null; }
                 segs = splitText(text);
                 if (!segs.length) { reject(new Error('Cannot split text')); return; }
+
+                // Load images (0% to 10%)
+                updateProgress(3, '3%', 'Loading images...');
                 for (let i = 0; i < segs.length; i++) {
                     const seed = `s${Date.now()}${i}${Math.random().toString(36).slice(2,6)}`;
                     try {
@@ -1490,7 +1578,10 @@
                         await new Promise(r => { im.onload = r; });
                         imgs.push(im);
                     }
+                    const loadPct = 3 + (i / segs.length) * 7;
+                    updateProgress(loadPct, Math.round(loadPct) + '%', `Image ${i+1}/${segs.length}`);
                 }
+
                 try {
                     const stream = cv.captureStream(30);
                     let mime = '';
@@ -1516,6 +1607,9 @@
                     recorder.onerror = () => reject(new Error('Recorder failed'));
                     recorder.start(200);
                 } catch (e) { reject(e); return; }
+
+                // Start TTS (10% to 80% done in drawFrame)
+                updateProgress(10, '10%', 'Starting narration...');
                 utter = new SpeechSynthesisUtterance(text);
                 utter.rate = parseFloat(speedSlider.value);
                 utter.pitch = 1;
@@ -1535,6 +1629,7 @@
                                 playing = false;
                                 if (animId) cancelAnimationFrame(animId);
                                 if (recorder && recorder.state === 'recording') recorder.stop();
+                                updateProgress(80, '80%', 'Rendering final video...');
                             }
                         }, w);
                     }
@@ -1563,6 +1658,8 @@
                 ytProgBar.style.width = '0%';
                 ytProgPct.textContent = '0%';
                 ytProgLbl.textContent = 'Reading…';
+                updateProgress(85, '85%', 'Preparing upload...');
+
                 const metadata = {
                     snippet: {
                         title: (($('ytTitle').value || 'Short Story - ') + title).slice(0, 100),
@@ -1597,9 +1694,14 @@
                     xhr.upload.onprogress = e => {
                         if (e.lengthComputable) {
                             const p = Math.round(e.loaded / e.total * 100);
+                            // Update both bars
                             ytProgBar.style.width = p + '%';
                             ytProgPct.textContent = p + '%';
                             ytProgLbl.textContent = `${fmtBytes(e.loaded)} / ${fmtBytes(e.total)}`;
+                            // Main progress: 80% to 100%
+                            const mainPct = 80 + (e.loaded / e.total) * 20;
+                            const sub = `Uploading ${fmtBytes(e.loaded)} / ${fmtBytes(e.total)}`;
+                            updateProgress(mainPct, Math.round(mainPct) + '%', sub);
                         }
                     };
                     xhr.onload = () => {
@@ -1607,6 +1709,7 @@
                         if (xhr.status >= 200 && xhr.status < 300) {
                             let d;
                             try { d = JSON.parse(xhr.responseText); } catch { d = {}; }
+                            updateProgress(100, '100%', 'Done!');
                             resolve(d.id || 'ok');
                         } else {
                             let msg = `Upload failed (${xhr.status})`;
@@ -1649,18 +1752,21 @@
                 setStep('upload', '');
                 setBadge('active', `Generating ${currentGenre}…`);
                 addLog(`Starting: ${currentGenre}`, 'info');
+                updateProgress(0, '0%', `Generating ${currentGenre} story...`);
 
                 let story = '';
                 try {
                     story = await generateStory(currentGenre);
                     addLog(`${currentGenre}: Story ready (${story.split(/\s+/).length} words)`, 'ok');
                     setStep('story', 'done');
+                    updateProgress(5, '5%', 'Story generated');
                 } catch (e) {
                     stats.fail++;
                     stats.consecFail++;
                     updateStats();
                     setStep('story', 'error');
                     addLog(`${currentGenre}: Story failed — ${e.message}`, 'err');
+                    setBadge('error', 'Story failed');
                     if (stats.consecFail >= 5) { addLog('5 fails, waiting 15s…', 'warn');
                         await sleep(15000);
                         stats.consecFail = 0; } else await sleep(3000);
@@ -1691,6 +1797,7 @@
                     if (animId) cancelAnimationFrame(animId);
                     if (utter) speechSynthesis.cancel();
                     if (recorder && recorder.state === 'recording') recorder.stop();
+                    setBadge('error', 'Video failed');
                     if (stats.consecFail >= 5) { addLog('5 fails, waiting 15s…', 'warn');
                         await sleep(15000);
                         stats.consecFail = 0; } else await sleep(3000);
@@ -1708,9 +1815,11 @@
                     addLog(`${currentGenre}: Uploaded → youtube.com/watch?v=${vidId}`, 'ok');
                     setStep('upload', 'done');
                     toast(`Uploaded: ${currentGenre}`, 'fa-check-circle', '#22c55e');
+                    setBadge('done', 'Uploaded');
                 } catch (e) {
                     addLog(`${currentGenre}: Upload failed — ${e.message}`, 'err');
                     setStep('upload', 'error');
+                    setBadge('error', 'Upload failed');
                     if (e.message.includes('expired') || e.message.includes('401')) {
                         connectedBadge.style.display = 'none';
                         ytSignInBtn.innerHTML = '<i class="fab fa-google"></i> Connect YouTube';
@@ -1720,9 +1829,12 @@
                         break;
                     }
                 }
+                updateProgress(100, '100%', 'Cycle complete');
                 setBadge('done', 'Cycle complete');
                 addLog('—', 'info');
                 await sleep(2000);
+                // reset progress for next cycle
+                updateProgress(0, '0%', 'Ready for next');
             }
         }
 
@@ -1747,6 +1859,7 @@
             updateStats();
             addLog('Auto loop started', 'ok');
             toast('Started!', 'fa-bolt', '#e8913a');
+            updateProgress(0, '0%', 'Starting...');
             autoLoop();
         });
 
@@ -1767,6 +1880,7 @@
             idleOv.classList.remove('hidden');
             addLog('Stopped by user', 'warn');
             toast('Stopped', 'fa-stop-circle', '#f59e0b');
+            updateProgress(0, '0%', 'Stopped');
         });
 
         // ============================================================
@@ -1789,7 +1903,7 @@
         ctx.fillStyle = ig;
         ctx.fillRect(0, 0, CW, CH);
 
-        // init OAuth after a moment
+        // init OAuth
         setTimeout(() => {
             const cid = clientIdInput.value.trim();
             if (cid) initYouTube();
@@ -1798,6 +1912,9 @@
         // update origin display
         const origin = window.location.origin;
         originDisplay.textContent = origin || 'http://localhost:8000';
+
+        // initial progress reset
+        updateProgress(0, '0%', 'Ready');
     </script>
 </body>
 </html>

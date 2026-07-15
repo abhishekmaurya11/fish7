@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        /* ─── base styling ─── */
+        /* ─── same styling as before ─── */
         :root {
             --bg: #0c0b09;
             --bg2: #1a1816;
@@ -567,7 +567,7 @@
 
         <!-- Controls -->
         <section class="fi fi2" style="display:flex;flex-wrap:wrap;gap:.65rem;align-items:center;margin-bottom:1.3rem;">
-            <button id="genBtn" class="btn-p" disabled><i class="fas fa-play"></i> Start Auto Loop</button>
+            <button id="genBtn" class="btn-p"><i class="fas fa-play"></i> Start Auto Loop</button>
             <button id="stopBtn" class="btn-s" disabled><i class="fas fa-stop"></i> Stop</button>
             <button id="dlBtn" class="btn-dl" disabled><i class="fab fa-youtube"></i> Download</button>
             <div style="flex:1;"></div>
@@ -1554,7 +1554,7 @@
 
         // ─── Event Bindings ────────────────────────────────────────
 
-        // Start auto loop
+        // Start auto loop – always enabled
         genBtn.addEventListener('click', () => {
             if (loopRunning) return;
             runAutoLoop();

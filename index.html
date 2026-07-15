@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>StoryToVideo — Auto‑Generate & Upload (Gemini 2.5)</title>
+    <title>StoryToVideo — Auto‑Generate & Upload (Gemini 1.5)</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        /* ─── same styling as before ─── */
+        /* ─── styling ─── */
         :root {
             --bg: #0c0b09;
             --bg2: #1a1816;
@@ -21,519 +21,79 @@
             --border: #2a2622;
             --log-bg: #0f0e0c;
         }
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Space Grotesk', sans-serif;
-            background: var(--bg);
-            color: var(--fg);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background: radial-gradient(ellipse at 25% 15%, rgba(232, 145, 58, .07) 0%, transparent 55%),
-                radial-gradient(ellipse at 75% 85%, rgba(200, 120, 40, .04) 0%, transparent 50%);
-            pointer-events: none;
-        }
-        .wrap {
-            position: relative;
-            z-index: 1;
-            max-width: 1020px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem;
-        }
-        .canvas-box {
-            position: relative;
-            background: #000;
-            border-radius: 14px;
-            overflow: hidden;
-            aspect-ratio: 16/9;
-            box-shadow: 0 24px 64px rgba(0, 0, 0, .55), 0 0 0 1px var(--border);
-        }
-        .canvas-box canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        .bar-top,
-        .bar-bot {
-            position: absolute;
-            left: 0;
-            right: 0;
-            height: 7.5%;
-            background: #000;
-            pointer-events: none;
-            z-index: 2;
-        }
-        .bar-top {
-            top: 0;
-        }
-        .bar-bot {
-            bottom: 0;
-        }
-        .story-ta {
-            width: 100%;
-            min-height: 140px;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.2rem;
-            color: var(--fg);
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 1rem;
-            line-height: 1.75;
-            resize: vertical;
-            outline: none;
-            transition: border-color .3s, box-shadow .3s;
-        }
-        .story-ta:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(232, 145, 58, .15);
-        }
-        .story-ta::placeholder {
-            color: var(--muted);
-        }
-        .btn-p {
-            background: var(--accent);
-            color: #0c0b09;
-            font-weight: 600;
-            padding: .8rem 1.8rem;
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: .95rem;
-            transition: all .3s;
-            display: inline-flex;
-            align-items: center;
-            gap: .5rem;
-        }
-        .btn-p:hover:not(:disabled) {
-            background: var(--accent2);
-            transform: translateY(-1px);
-            box-shadow: 0 8px 24px rgba(232, 145, 58, .3);
-        }
-        .btn-p:disabled {
-            opacity: .45;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        .btn-s {
-            background: var(--bg2);
-            color: var(--fg);
-            font-weight: 500;
-            padding: .7rem 1.3rem;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            cursor: pointer;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: .88rem;
-            transition: all .3s;
-            display: inline-flex;
-            align-items: center;
-            gap: .45rem;
-        }
-        .btn-s:hover:not(:disabled) {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-        .btn-s:disabled {
-            opacity: .35;
-            cursor: not-allowed;
-        }
-        .btn-dl {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: #fff;
-            font-weight: 600;
-            padding: .8rem 1.8rem;
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: .95rem;
-            transition: all .3s;
-            display: inline-flex;
-            align-items: center;
-            gap: .5rem;
-        }
-        .btn-dl:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 24px rgba(239, 68, 68, .3);
-        }
-        .btn-dl:disabled {
-            opacity: .35;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        .btn-yt {
-            background: linear-gradient(135deg, #ff0000, #cc0000);
-            color: #fff;
-            font-weight: 600;
-            padding: .8rem 1.8rem;
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: .95rem;
-            transition: all .3s;
-            display: inline-flex;
-            align-items: center;
-            gap: .5rem;
-        }
-        .btn-yt:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 24px rgba(255, 0, 0, .3);
-        }
-        .btn-yt:disabled {
-            opacity: .35;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        .prog-track {
-            width: 100%;
-            height: 4px;
-            background: var(--border);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-        .prog-fill {
-            height: 100%;
-            background: var(--accent);
-            border-radius: 2px;
-            width: 0%;
-            transition: width .25s;
-        }
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: .4rem;
-            padding: .3rem .75rem;
-            border-radius: 20px;
-            font-size: .78rem;
-            font-weight: 500;
-        }
-        .b-idle {
-            background: var(--bg2);
-            color: var(--muted);
-        }
-        .b-load {
-            background: rgba(232, 145, 58, .15);
-            color: var(--accent);
-        }
-        .b-voice {
-            background: rgba(168, 85, 247, .14);
-            color: #a855f7;
-        }
-        .b-done {
-            background: rgba(34, 197, 94, .14);
-            color: #22c55e;
-        }
-        .b-dl {
-            background: rgba(239, 68, 68, .14);
-            color: #ef4444;
-        }
-        .b-yt {
-            background: rgba(255, 0, 0, .14);
-            color: #ff0000;
-        }
-        .toast-el {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: .9rem 1.4rem;
-            color: var(--fg);
-            font-size: .88rem;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, .45);
-            transform: translateY(130%);
-            transition: transform .45s cubic-bezier(.16, 1, .3, 1);
-            z-index: 200;
-            display: flex;
-            align-items: center;
-            gap: .7rem;
-            max-width: 400px;
-        }
-        .toast-el.vis {
-            transform: translateY(0);
-        }
-        .idle-ov,
-        .done-ov {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 3;
-        }
-        .done-ov {
-            background: rgba(0, 0, 0, .5);
-            cursor: pointer;
-        }
-        .voice-card {
-            background: linear-gradient(135deg, rgba(168, 85, 247, .08), rgba(232, 145, 58, .05));
-            border: 1px solid rgba(168, 85, 247, .2);
-            border-radius: 14px;
-            padding: 1.3rem;
-            margin-bottom: 1.5rem;
-            display: none;
-        }
-        .voice-card.active {
-            display: block;
-            animation: fadeUp .4s ease-out;
-        }
-        .sel {
-            width: 100%;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: .6rem .9rem;
-            color: var(--fg);
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: .88rem;
-            outline: none;
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%237a7268' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6 6.5-6'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-        }
-        .sel:focus {
-            border-color: #a855f7;
-        }
-        .sel option {
-            background: var(--card);
-            color: var(--fg);
-        }
-        .speed-slider {
-            -webkit-appearance: none;
-            width: 100%;
-            height: 4px;
-            border-radius: 2px;
-            background: var(--border);
-            outline: none;
-        }
-        .speed-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #a855f7;
-            cursor: pointer;
-            border: 2px solid var(--bg);
-        }
-        .speed-slider::-moz-range-thumb {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #a855f7;
-            cursor: pointer;
-            border: 2px solid var(--bg);
-        }
-        .file-info {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.2rem;
-            margin-top: 1rem;
-            display: none;
-            align-items: center;
-            gap: 1rem;
-        }
-        .file-info.show {
-            display: flex;
-            animation: fadeUp .4s ease-out;
-        }
-        .yt-section {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 1.3rem;
-            margin-top: 1rem;
-            display: none;
-        }
-        .yt-section.show {
-            display: block;
-            animation: fadeUp .4s ease-out;
-        }
-        .input-f {
-            width: 100%;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: .6rem .9rem;
-            color: var(--fg);
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: .88rem;
-            outline: none;
-            transition: border-color .3s;
-        }
-        .input-f:focus {
-            border-color: var(--accent);
-        }
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(18px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        .fi {
-            animation: fadeUp .55s ease-out both;
-        }
-        .fi1 {
-            animation-delay: .08s;
-        }
-        .fi2 {
-            animation-delay: .16s;
-        }
-        .fi3 {
-            animation-delay: .24s;
-        }
-        .fi4 {
-            animation-delay: .32s;
-        }
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-        .spin {
-            animation: spin .7s linear infinite;
-        }
-        @media(prefers-reduced-motion:reduce) {
-            * {
-                animation-duration: .01ms !important;
-                transition-duration: .01ms !important;
-            }
-        }
-        @media(max-width:640px) {
-            .wrap {
-                padding: 1rem;
-            }
-            .btn-p,
-            .btn-dl,
-            .btn-yt {
-                padding: .7rem 1.2rem;
-                font-size: .88rem;
-            }
-            .grid-2 {
-                grid-template-columns: 1fr !important;
-            }
-        }
-
-        /* ─── log panel ─── */
-        .log-panel {
-            background: var(--log-bg);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 0.8rem 1rem;
-            margin-top: 1rem;
-            max-height: 180px;
-            overflow-y: auto;
-            font-family: 'Space Grotesk', monospace;
-            font-size: 0.8rem;
-            line-height: 1.6;
-            color: var(--muted);
-        }
-        .log-panel::-webkit-scrollbar {
-            width: 4px;
-        }
-        .log-panel::-webkit-scrollbar-track {
-            background: var(--bg);
-        }
-        .log-panel::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 4px;
-        }
-        .log-entry {
-            display: flex;
-            gap: 0.6rem;
-            padding: 0.1rem 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
-        }
-        .log-time {
-            color: var(--muted);
-            white-space: nowrap;
-        }
-        .log-msg {
-            color: var(--fg);
-            word-break: break-word;
-        }
-        .log-msg.error {
-            color: #ef4444;
-        }
-        .log-msg.success {
-            color: #22c55e;
-        }
-        .log-msg.info {
-            color: var(--accent);
-        }
-
-        .loop-status {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: .7rem 1rem;
-            margin-top: .5rem;
-            font-size: .85rem;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: .6rem 1.2rem;
-            color: var(--muted);
-        }
-        .loop-status .highlight {
-            color: var(--fg);
-            font-weight: 500;
-        }
-        .loop-status .genre-tag {
-            background: rgba(232, 145, 58, .15);
-            color: var(--accent);
-            padding: .2rem .7rem;
-            border-radius: 12px;
-            font-size: .75rem;
-        }
-        /* API key row */
-        .api-key-row {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-        }
-        .api-key-row label {
-            font-size: 0.85rem;
-            color: var(--muted);
-            white-space: nowrap;
-        }
-        .api-key-row .input-f {
-            flex: 1;
-            min-width: 180px;
-        }
-        .api-key-row .btn-s {
-            padding: .4rem .9rem;
-            font-size: .8rem;
-        }
-        .key-hint {
-            font-size: 0.7rem;
-            color: var(--muted);
-            margin-left: 0.5rem;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Space Grotesk', sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; overflow-x: hidden; }
+        body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse at 25% 15%, rgba(232,145,58,.07) 0%, transparent 55%), radial-gradient(ellipse at 75% 85%, rgba(200,120,40,.04) 0%, transparent 50%); pointer-events: none; }
+        .wrap { position: relative; z-index: 1; max-width: 1020px; margin: 0 auto; padding: 2rem 1.5rem; }
+        .canvas-box { position: relative; background: #000; border-radius: 14px; overflow: hidden; aspect-ratio: 16/9; box-shadow: 0 24px 64px rgba(0,0,0,.55), 0 0 0 1px var(--border); }
+        .canvas-box canvas { width: 100%; height: 100%; display: block; }
+        .bar-top, .bar-bot { position: absolute; left: 0; right: 0; height: 7.5%; background: #000; pointer-events: none; z-index: 2; }
+        .bar-top { top: 0; } .bar-bot { bottom: 0; }
+        .story-ta { width: 100%; min-height: 140px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem; color: var(--fg); font-family: 'Space Grotesk', sans-serif; font-size: 1rem; line-height: 1.75; resize: vertical; outline: none; transition: border-color .3s, box-shadow .3s; }
+        .story-ta:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,145,58,.15); }
+        .story-ta::placeholder { color: var(--muted); }
+        .btn-p { background: var(--accent); color: #0c0b09; font-weight: 600; padding: .8rem 1.8rem; border-radius: 10px; border: none; cursor: pointer; font-family: 'Space Grotesk', sans-serif; font-size: .95rem; transition: all .3s; display: inline-flex; align-items: center; gap: .5rem; }
+        .btn-p:hover:not(:disabled) { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(232,145,58,.3); }
+        .btn-p:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-s { background: var(--bg2); color: var(--fg); font-weight: 500; padding: .7rem 1.3rem; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; font-family: 'Space Grotesk', sans-serif; font-size: .88rem; transition: all .3s; display: inline-flex; align-items: center; gap: .45rem; }
+        .btn-s:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+        .btn-s:disabled { opacity: .35; cursor: not-allowed; }
+        .btn-v { background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; font-weight: 600; padding: .7rem 1.3rem; border-radius: 10px; border: none; cursor: pointer; font-family: 'Space Grotesk', sans-serif; font-size: .88rem; transition: all .3s; display: inline-flex; align-items: center; gap: .45rem; }
+        .btn-v:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(34,197,94,.3); }
+        .btn-v:disabled { opacity: .35; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-dl { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; font-weight: 600; padding: .8rem 1.8rem; border-radius: 10px; border: none; cursor: pointer; font-family: 'Space Grotesk', sans-serif; font-size: .95rem; transition: all .3s; display: inline-flex; align-items: center; gap: .5rem; }
+        .btn-dl:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(239,68,68,.3); }
+        .btn-dl:disabled { opacity: .35; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-yt { background: linear-gradient(135deg, #ff0000, #cc0000); color: #fff; font-weight: 600; padding: .8rem 1.8rem; border-radius: 10px; border: none; cursor: pointer; font-family: 'Space Grotesk', sans-serif; font-size: .95rem; transition: all .3s; display: inline-flex; align-items: center; gap: .5rem; }
+        .btn-yt:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(255,0,0,.3); }
+        .btn-yt:disabled { opacity: .35; cursor: not-allowed; transform: none; box-shadow: none; }
+        .prog-track { width: 100%; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+        .prog-fill { height: 100%; background: var(--accent); border-radius: 2px; width: 0%; transition: width .25s; }
+        .badge { display: inline-flex; align-items: center; gap: .4rem; padding: .3rem .75rem; border-radius: 20px; font-size: .78rem; font-weight: 500; }
+        .b-idle { background: var(--bg2); color: var(--muted); }
+        .b-load { background: rgba(232,145,58,.15); color: var(--accent); }
+        .b-voice { background: rgba(168,85,247,.14); color: #a855f7; }
+        .b-done { background: rgba(34,197,94,.14); color: #22c55e; }
+        .b-dl { background: rgba(239,68,68,.14); color: #ef4444; }
+        .b-yt { background: rgba(255,0,0,.14); color: #ff0000; }
+        .toast-el { position: fixed; bottom: 2rem; right: 2rem; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: .9rem 1.4rem; color: var(--fg); font-size: .88rem; box-shadow: 0 12px 40px rgba(0,0,0,.45); transform: translateY(130%); transition: transform .45s cubic-bezier(.16,1,.3,1); z-index: 200; display: flex; align-items: center; gap: .7rem; max-width: 400px; }
+        .toast-el.vis { transform: translateY(0); }
+        .idle-ov, .done-ov { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 3; }
+        .done-ov { background: rgba(0,0,0,.5); cursor: pointer; }
+        .voice-card { background: linear-gradient(135deg, rgba(168,85,247,.08), rgba(232,145,58,.05)); border: 1px solid rgba(168,85,247,.2); border-radius: 14px; padding: 1.3rem; margin-bottom: 1.5rem; display: none; }
+        .voice-card.active { display: block; animation: fadeUp .4s ease-out; }
+        .sel { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: .6rem .9rem; color: var(--fg); font-family: 'Space Grotesk', sans-serif; font-size: .88rem; outline: none; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%237a7268' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6 6.5-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+        .sel:focus { border-color: #a855f7; } .sel option { background: var(--card); color: var(--fg); }
+        .speed-slider { -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px; background: var(--border); outline: none; }
+        .speed-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #a855f7; cursor: pointer; border: 2px solid var(--bg); }
+        .speed-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #a855f7; cursor: pointer; border: 2px solid var(--bg); }
+        .file-info { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem; margin-top: 1rem; display: none; align-items: center; gap: 1rem; }
+        .file-info.show { display: flex; animation: fadeUp .4s ease-out; }
+        .yt-section { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.3rem; margin-top: 1rem; display: none; }
+        .yt-section.show { display: block; animation: fadeUp .4s ease-out; }
+        .input-f { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: .6rem .9rem; color: var(--fg); font-family: 'Space Grotesk', sans-serif; font-size: .88rem; outline: none; transition: border-color .3s; }
+        .input-f:focus { border-color: var(--accent); }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+        .fi { animation: fadeUp .55s ease-out both; } .fi1 { animation-delay: .08s; } .fi2 { animation-delay: .16s; } .fi3 { animation-delay: .24s; } .fi4 { animation-delay: .32s; }
+        @keyframes spin { to { transform: rotate(360deg); } } .spin { animation: spin .7s linear infinite; }
+        @media(prefers-reduced-motion:reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+        @media(max-width:640px) { .wrap { padding: 1rem; } .btn-p, .btn-dl, .btn-yt { padding: .7rem 1.2rem; font-size: .88rem; } .grid-2 { grid-template-columns: 1fr !important; } }
+        .log-panel { background: var(--log-bg); border: 1px solid var(--border); border-radius: 12px; padding: 0.8rem 1rem; margin-top: 1rem; max-height: 180px; overflow-y: auto; font-family: 'Space Grotesk', monospace; font-size: 0.8rem; line-height: 1.6; color: var(--muted); }
+        .log-panel::-webkit-scrollbar { width: 4px; } .log-panel::-webkit-scrollbar-track { background: var(--bg); } .log-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        .log-entry { display: flex; gap: 0.6rem; padding: 0.1rem 0; border-bottom: 1px solid rgba(255,255,255,0.02); }
+        .log-time { color: var(--muted); white-space: nowrap; } .log-msg { color: var(--fg); word-break: break-word; }
+        .log-msg.error { color: #ef4444; } .log-msg.success { color: #22c55e; } .log-msg.info { color: var(--accent); }
+        .loop-status { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: .7rem 1rem; margin-top: .5rem; font-size: .85rem; display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.2rem; color: var(--muted); }
+        .loop-status .highlight { color: var(--fg); font-weight: 500; }
+        .loop-status .genre-tag { background: rgba(232,145,58,.15); color: var(--accent); padding: .2rem .7rem; border-radius: 12px; font-size: .75rem; }
+        .api-key-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
+        .api-key-row label { font-size: 0.85rem; color: var(--muted); white-space: nowrap; }
+        .api-key-row .input-f { flex: 1; min-width: 180px; }
+        .api-key-row .btn-s { padding: .4rem .9rem; font-size: .8rem; }
+        .key-hint { font-size: 0.7rem; color: var(--muted); margin-left: 0.5rem; }
+        .delay-row { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin: 0.5rem 0; }
+        .delay-row label { font-size: 0.85rem; color: var(--muted); }
+        .delay-row .input-f { width: 80px; min-width: 60px; }
     </style>
 </head>
 <body>
@@ -545,15 +105,15 @@
                 </div>
                 <h1 style="font-size:1.7rem;font-weight:700;letter-spacing:-.5px;">StoryToVideo</h1>
             </div>
-            <p style="color:var(--muted);font-size:.92rem;margin-left:3.1rem;">Auto‑generate with Gemini 2.5 Flash, create videos, and upload to YouTube — loop until you stop</p>
+            <p style="color:var(--muted);font-size:.92rem;margin-left:3.1rem;">Auto‑generate with Gemini 1.5 Flash, create videos, upload to YouTube — loop with smart retry</p>
         </header>
 
         <!-- API Key Input -->
         <div class="api-key-row">
             <label for="apiKeyInput"><i class="fas fa-key"></i> Gemini API Key:</label>
-            <input type="text" id="apiKeyInput" class="input-f" value="AIzaSyCwLod_9bABFRaKVabkdBH9dS3d9ovbVCs" placeholder="Paste your API key (starts with AIza...)" />
+            <input type="text" id="apiKeyInput" class="input-f" value="AIzaSyDQ-yH39ccBYdVZh5GFSayoYgnhGfj0fZQ" placeholder="Paste your API key (starts with AIza...)" />
             <button id="setApiKeyBtn" class="btn-s"><i class="fas fa-save"></i> Set</button>
-            <span id="apiKeyStatus" style="font-size:0.75rem; color:#22c55e;">✅ Key pre-filled</span>
+            <span id="apiKeyStatus" style="font-size:0.75rem; color:#f59e0b;">⚠️ Key reported as leaked – get a fresh one</span>
             <span class="key-hint">(Get from <a href="https://makersuite.google.com/app/apikey" target="_blank" style="color:var(--accent);">Google AI Studio</a>)</span>
         </div>
 
@@ -566,18 +126,15 @@
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;" class="grid-2">
                 <div>
                     <label style="display:block;font-size:.78rem;color:var(--muted);margin-bottom:.4rem;">Language</label>
-                    <select id="langSel" class="sel" aria-label="Language">
-                        <option value="en">English</option>
-                        <option value="hi">Hindi (हिन्दी)</option>
-                    </select>
+                    <select id="langSel" class="sel"><option value="en">English</option><option value="hi">Hindi (हिन्दी)</option></select>
                 </div>
                 <div>
                     <label style="display:block;font-size:.78rem;color:var(--muted);margin-bottom:.4rem;">Voice</label>
-                    <select id="voiceSel" class="sel" aria-label="Voice"></select>
+                    <select id="voiceSel" class="sel"></select>
                 </div>
                 <div>
                     <label style="display:block;font-size:.78rem;color:var(--muted);margin-bottom:.4rem;">Speed: <span id="speedVal">1.0</span>x</label>
-                    <input type="range" id="speedSlider" class="speed-slider" min="0.5" max="1.5" step="0.1" value="1" style="margin-top:.6rem;" aria-label="Speed" />
+                    <input type="range" id="speedSlider" class="speed-slider" min="0.5" max="1.5" step="0.1" value="1" style="margin-top:.6rem;" />
                 </div>
             </div>
             <div style="margin-top:1rem;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
@@ -591,7 +148,7 @@
             <label style="display:block;font-weight:600;margin-bottom:.65rem;font-size:.92rem;">
                 <i class="fas fa-pen-nib" style="color:var(--accent);margin-right:.35rem;"></i> Story (auto‑generated)
             </label>
-            <textarea id="inp" class="story-ta" placeholder="Stories will appear here automatically..." aria-label="Story text"></textarea>
+            <textarea id="inp" class="story-ta" placeholder="Stories will appear here automatically..."></textarea>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.6rem;">
                 <span id="wc" style="color:var(--muted);font-size:.78rem;">0 words</span>
                 <button id="sampleBtn" class="btn-s" style="padding:.35rem .75rem;font-size:.78rem;">
@@ -600,7 +157,7 @@
             </div>
         </section>
 
-        <!-- Controls -->
+        <!-- Controls + Delay -->
         <section class="fi fi2" style="display:flex;flex-wrap:wrap;gap:.65rem;align-items:center;margin-bottom:1.3rem;">
             <button id="genBtn" class="btn-p"><i class="fas fa-play"></i> Start Auto Loop</button>
             <button id="stopBtn" class="btn-s" disabled><i class="fas fa-stop"></i> Stop</button>
@@ -608,6 +165,13 @@
             <div style="flex:1;"></div>
             <div id="badge" class="badge b-idle"><i class="fas fa-circle" style="font-size:.35rem;"></i> Ready</div>
         </section>
+
+        <!-- Delay between iterations -->
+        <div class="delay-row">
+            <label for="autoDelay"><i class="fas fa-clock"></i> Delay between loops:</label>
+            <input type="number" id="autoDelay" class="input-f" value="15" min="5" max="120" />
+            <span style="color:var(--muted);font-size:0.8rem;">seconds (avoid quota limits)</span>
+        </div>
 
         <!-- Loop status -->
         <div id="loopStatus" class="loop-status" style="display:none;">
@@ -629,8 +193,7 @@
         <!-- Canvas -->
         <section class="fi fi3" style="margin-bottom:1rem;">
             <div class="canvas-box" id="cbox">
-                <div class="bar-top"></div>
-                <div class="bar-bot"></div>
+                <div class="bar-top"></div><div class="bar-bot"></div>
                 <canvas id="cv" width="1280" height="720"></canvas>
                 <div class="idle-ov" id="idleOv">
                     <i class="fas fa-film" style="font-size:2.8rem;color:var(--muted);opacity:.25;margin-bottom:.8rem;"></i>
@@ -657,7 +220,7 @@
             <button id="dlBtn2" class="btn-dl" style="padding:.6rem 1.2rem;font-size:.85rem;flex-shrink:0;"><i class="fas fa-download"></i> Download</button>
         </div>
 
-        <!-- YouTube Upload Section -->
+        <!-- YouTube Upload -->
         <section id="ytSection" class="yt-section">
             <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:1rem;">
                 <i class="fab fa-youtube" style="color:#ff0000;font-size:1.3rem;"></i>
@@ -665,54 +228,39 @@
             </div>
             <div id="ytSignIn">
                 <button id="ytSignInBtn" class="btn-s"><i class="fab fa-google"></i> Connect YouTube Account</button>
-                <p style="font-size:.75rem;color:var(--muted);margin-top:.5rem;">
-                    Required for auto‑upload. Replace the placeholder client ID with your own.
-                </p>
+                <p style="font-size:.75rem;color:var(--muted);margin-top:.5rem;">Required for auto‑upload. Replace client ID with your own.</p>
             </div>
             <div id="ytUpload" style="display:none;">
                 <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;">
                     <div style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;">
                         <i class="fas fa-user" style="color:#0c0b09;font-size:.8rem;"></i>
                     </div>
-                    <div style="flex:1;">
-                        <p style="font-weight:600;font-size:.9rem;">Connected</p>
-                        <p style="font-size:.75rem;color:#22c55e;">Ready to upload</p>
-                    </div>
+                    <div style="flex:1;"><p style="font-weight:600;font-size:.9rem;">Connected</p><p style="font-size:.75rem;color:#22c55e;">Ready to upload</p></div>
                     <button id="ytSignOutBtn" class="btn-s" style="padding:.35rem .7rem;font-size:.75rem;">Sign Out</button>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;" class="grid-2">
-                    <div>
-                        <label style="display:block;font-size:.78rem;color:var(--muted);margin-bottom:.4rem;">Video Title</label>
-                        <input type="text" id="ytTitle" class="input-f" placeholder="My Story Video" />
-                    </div>
-                    <div>
-                        <label style="display:block;font-size:.78rem;color:var(--muted);margin-bottom:.4rem;">Privacy</label>
-                        <select id="ytPrivacy" class="sel"><option value="private">Private</option><option value="unlisted">Unlisted</option><option value="public">Public</option></select>
-                    </div>
+                    <div><label style="display:block;font-size:.78rem;color:var(--muted);margin-bottom:.4rem;">Video Title</label><input type="text" id="ytTitle" class="input-f" placeholder="My Story Video" /></div>
+                    <div><label style="display:block;font-size:.78rem;color:var(--muted);margin-bottom:.4rem;">Privacy</label><select id="ytPrivacy" class="sel"><option value="private">Private</option><option value="unlisted">Unlisted</option><option value="public">Public</option></select></div>
                 </div>
-                <div style="margin-bottom:1rem;">
-                    <label style="display:block;font-size:.78rem;color:var(--muted);margin-bottom:.4rem;">Description</label>
-                    <textarea id="ytDesc" class="story-ta" style="min-height:70px;font-size:.85rem;" placeholder="Add a description..."></textarea>
-                </div>
+                <div style="margin-bottom:1rem;"><label style="display:block;font-size:.78rem;color:var(--muted);margin-bottom:.4rem;">Description</label><textarea id="ytDesc" class="story-ta" style="min-height:70px;font-size:.85rem;" placeholder="Add a description..."></textarea></div>
                 <button id="ytUploadBtn" class="btn-yt" disabled><i class="fab fa-youtube"></i> Upload to YouTube</button>
             </div>
         </section>
 
         <!-- Log Panel -->
         <div class="log-panel" id="logPanel">
-            <div class="log-entry"><span class="log-time">⏱️</span><span class="log-msg info">Ready — key is pre‑filled, click "Start Auto Loop"</span></div>
+            <div class="log-entry"><span class="log-time">⏱️</span><span class="log-msg info">Ready — click "Start Auto Loop"</span></div>
         </div>
 
-        <!-- Info -->
         <section class="fi fi4" style="padding:1.15rem;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-top:1rem;">
             <div style="display:flex;gap:.7rem;align-items:flex-start;">
                 <i class="fas fa-circle-check" style="color:#22c55e;margin-top:.15rem;font-size:1rem;"></i>
                 <div>
-                    <p style="font-weight:600;margin-bottom:.25rem;font-size:.88rem;">🤖 Gemini 2.5 Flash with SDK & Retry</p>
+                    <p style="font-weight:600;margin-bottom:.25rem;font-size:.88rem;">🔄 Smart Retry + Quota Protection</p>
                     <p style="color:var(--muted);font-size:.82rem;line-height:1.65;">
-                        Uses <code style="background:var(--bg2);padding:0 .3rem;border-radius:4px;">@google/genai</code> SDK with retry logic (503 handling).<br>
-                        Your API key is pre‑filled. The loop generates stories, creates videos with audio, and uploads to YouTube (if signed in).<br>
-                        Errors are logged and skipped – the loop continues until you press <strong>Stop</strong>.
+                        Uses <code style="background:var(--bg2);padding:0 .3rem;border-radius:4px;">gemini-1.5-flash</code> (higher quota: 60/min).<br>
+                        If you hit 429, it <strong>waits for the exact retryDelay</strong> from the API, then retries.<br>
+                        Set a delay between loops to avoid rate limits. <strong>⚠️ Your current key is reported as leaked – get a fresh one!</strong>
                     </p>
                 </div>
             </div>
@@ -725,111 +273,63 @@
     </div>
 
     <script type="importmap">
-        {
-            "imports": {
-                "@google/genai": "https://esm.run/@google/genai"
-            }
-        }
+        { "imports": { "@google/genai": "https://esm.run/@google/genai" } }
     </script>
     <script type="module">
-        // ──────────────────────────────────────────────────────────────
-        //  IMPORT the GoogleGenAI SDK
-        // ──────────────────────────────────────────────────────────────
         import { GoogleGenAI } from '@google/genai';
 
         // ─── YOUR CONFIG ──────────────────────────────────────────────
-        const DEFAULT_API_KEY = 'AIzaSyCwLod_9bABFRaKVabkdBH9dS3d9ovbVCs';
+        const DEFAULT_API_KEY = 'AIzaSyDQ-yH39ccBYdVZh5GFSayoYgnhGfj0fZQ';
         let GEMINI_API_KEY = DEFAULT_API_KEY;
 
-        // For YouTube OAuth, replace with your own client ID
-        const YT_CLIENT_ID = '699259843998-qg5t2emtfubf2gpj7hbfrdgbi3lqocl5.apps.googleusercontent.com'; // <-- REPLACE ME
+        // YouTube OAuth – replace with your own
+        const YT_CLIENT_ID = '699259843998-qg5t2emtfubf2gpj7hbfrdgbi3lqocl5.apps.googleusercontent.com';
 
         // ─── GENRES ──────────────────────────────────────────────────
         const GENRES = [
-            "Action", "Adventure", "Comedy", "Crime", "Drama", "Fantasy",
-            "Science Fiction (Sci-Fi)", "Horror", "Mystery", "Thriller", "Suspense",
-            "Romance", "Historical Fiction", "Historical Fantasy", "Alternate History",
-            "Western", "War", "Military Fiction", "Political Fiction", "Legal Thriller",
-            "Medical Drama", "Psychological Thriller", "Psychological Horror", "Paranormal",
-            "Supernatural", "Urban Fantasy", "Dark Fantasy", "Epic Fantasy", "High Fantasy",
-            "Low Fantasy", "Sword and Sorcery", "Mythology", "Fairy Tale", "Folklore",
-            "Fable", "Magical Realism", "Dystopian", "Utopian", "Post-Apocalyptic",
-            "Apocalyptic", "Steampunk", "Cyberpunk", "Biopunk", "Dieselpunk", "Solarpunk",
-            "Space Opera", "Time Travel", "First Contact", "Alien Invasion", "Coming of Age",
-            "Family Saga", "Slice of Life", "Survival", "Disaster", "Sports Fiction",
-            "School Life", "Campus Fiction", "Detective", "Noir", "Hard-Boiled Detective",
-            "Spy Fiction", "Espionage", "Heist", "Adventure Thriller", "Monster Fiction",
-            "Zombie Fiction", "Vampire Fiction", "Werewolf Fiction", "Ghost Story",
-            "Gothic Fiction", "Fairy Romance", "Dark Romance", "Romantic Comedy", "Chick Lit",
-            "Young Adult (YA)", "New Adult", "Children's Fiction", "Middle Grade",
-            "Fairy Tale Retelling", "Myth Retelling", "LitRPG", "GameLit", "Portal Fantasy",
-            "Isekai", "Cultivation (Xianxia)", "Wuxia", "Martial Arts", "Pirate Adventure",
-            "Treasure Hunt", "Road Trip", "Survival Horror", "Cosmic Horror",
-            "Lovecraftian Horror", "Body Horror", "Folk Horror", "Techno Thriller",
-            "Eco Thriller", "Climate Fiction (Cli-Fi)", "Speculative Fiction", "Satire",
-            "Tragedy", "Absurdist Fiction", "Philosophical Fiction", "Literary Fiction",
-            "Experimental Fiction", "Flash Fiction", "Short Story", "Anthology"
+            "Action","Adventure","Comedy","Crime","Drama","Fantasy",
+            "Science Fiction (Sci-Fi)","Horror","Mystery","Thriller","Suspense",
+            "Romance","Historical Fiction","Historical Fantasy","Alternate History",
+            "Western","War","Military Fiction","Political Fiction","Legal Thriller",
+            "Medical Drama","Psychological Thriller","Psychological Horror","Paranormal",
+            "Supernatural","Urban Fantasy","Dark Fantasy","Epic Fantasy","High Fantasy",
+            "Low Fantasy","Sword and Sorcery","Mythology","Fairy Tale","Folklore",
+            "Fable","Magical Realism","Dystopian","Utopian","Post-Apocalyptic",
+            "Apocalyptic","Steampunk","Cyberpunk","Biopunk","Dieselpunk","Solarpunk",
+            "Space Opera","Time Travel","First Contact","Alien Invasion","Coming of Age",
+            "Family Saga","Slice of Life","Survival","Disaster","Sports Fiction",
+            "School Life","Campus Fiction","Detective","Noir","Hard-Boiled Detective",
+            "Spy Fiction","Espionage","Heist","Adventure Thriller","Monster Fiction",
+            "Zombie Fiction","Vampire Fiction","Werewolf Fiction","Ghost Story",
+            "Gothic Fiction","Fairy Romance","Dark Romance","Romantic Comedy","Chick Lit",
+            "Young Adult (YA)","New Adult","Children's Fiction","Middle Grade",
+            "Fairy Tale Retelling","Myth Retelling","LitRPG","GameLit","Portal Fantasy",
+            "Isekai","Cultivation (Xianxia)","Wuxia","Martial Arts","Pirate Adventure",
+            "Treasure Hunt","Road Trip","Survival Horror","Cosmic Horror",
+            "Lovecraftian Horror","Body Horror","Folk Horror","Techno Thriller",
+            "Eco Thriller","Climate Fiction (Cli-Fi)","Speculative Fiction","Satire",
+            "Tragedy","Absurdist Fiction","Philosophical Fiction","Literary Fiction",
+            "Experimental Fiction","Flash Fiction","Short Story","Anthology"
         ];
 
         // ─── CORE VARIABLES ──────────────────────────────────────────
-        const SLIDE_MS = 2000,
-            TRANS_MS = 450,
-            CW = 1280,
-            CH = 720,
-            WPS = 5;
-        let segs = [],
-            imgs = [],
-            playing = false,
-            animId = null,
-            t0 = 0;
-        let ttsEnded = false;
-        let videoBlob = null,
-            videoUrl = null;
-        let recorder = null,
-            recChunks = [];
-        let combinedStream = null;
-        let speakUtter = null;
-        let accessToken = null,
-            tokenClient = null;
-        let stopRequested = false;
-        let loopRunning = false;
-        let genai = null; // will be initialized when API key is set
+        const SLIDE_MS = 2000, TRANS_MS = 450, CW = 1280, CH = 720, WPS = 5;
+        let segs = [], imgs = [], playing = false, animId = null, t0 = 0, ttsEnded = false;
+        let videoBlob = null, videoUrl = null, recorder = null, recChunks = [], combinedStream = null, speakUtter = null;
+        let accessToken = null, tokenClient = null, stopRequested = false, loopRunning = false, genai = null;
 
-        // ─── DOM REFS ──────────────────────────────────────────────────
         const $ = id => document.getElementById(id);
-        const cv = $('cv'),
-            ctx = cv.getContext('2d');
-        const inp = $('inp'),
-            genBtn = $('genBtn'),
-            stopBtn = $('stopBtn'),
-            dlBtn = $('dlBtn'),
-            dlBtn2 = $('dlBtn2');
-        const progSec = $('progSec'),
-            progBar = $('progBar'),
-            progLbl = $('progLbl'),
-            progPct = $('progPct');
-        const badge = $('badge'),
-            idleOv = $('idleOv'),
-            doneOv = $('doneOv');
-        const voiceCard = $('voiceCard'),
-            voiceSel = $('voiceSel'),
-            speedSlider = $('speedSlider');
-        const speedVal = $('speedVal'),
-            previewVoiceBtn = $('previewVoiceBtn'),
-            voiceHint = $('voiceHint');
-        const fileInfo = $('fileInfo'),
-            fileName = $('fileName'),
-            fileMeta = $('fileMeta');
-        const langSel = $('langSel'),
-            ytSection = $('ytSection');
-        const loopStatus = $('loopStatus'),
-            iterCount = $('iterCount'),
-            currentGenre = $('currentGenre'),
-            currentStep = $('currentStep');
-        const logPanel = $('logPanel');
-        const apiKeyInput = $('apiKeyInput');
-        const setApiKeyBtn = $('setApiKeyBtn');
-        const apiKeyStatus = $('apiKeyStatus');
+        const cv = $('cv'), ctx = cv.getContext('2d');
+        const inp = $('inp'), genBtn = $('genBtn'), stopBtn = $('stopBtn'), dlBtn = $('dlBtn'), dlBtn2 = $('dlBtn2');
+        const progSec = $('progSec'), progBar = $('progBar'), progLbl = $('progLbl'), progPct = $('progPct');
+        const badge = $('badge'), idleOv = $('idleOv'), doneOv = $('doneOv');
+        const voiceCard = $('voiceCard'), voiceSel = $('voiceSel'), speedSlider = $('speedSlider');
+        const speedVal = $('speedVal'), previewVoiceBtn = $('previewVoiceBtn'), voiceHint = $('voiceHint');
+        const fileInfo = $('fileInfo'), fileName = $('fileName'), fileMeta = $('fileMeta');
+        const langSel = $('langSel'), ytSection = $('ytSection');
+        const loopStatus = $('loopStatus'), iterCount = $('iterCount'), currentGenre = $('currentGenre'), currentStep = $('currentStep');
+        const logPanel = $('logPanel'), apiKeyInput = $('apiKeyInput'), setApiKeyBtn = $('setApiKeyBtn'), apiKeyStatus = $('apiKeyStatus');
+        const autoDelay = $('autoDelay');
 
         // ─── API KEY MANAGEMENT ───────────────────────────────────────
         function initGenAI() {
@@ -856,12 +356,8 @@
                 apiKeyStatus.textContent = genai ? '✅ Key set' : '❌ Invalid key';
                 apiKeyStatus.style.color = genai ? '#22c55e' : '#ef4444';
                 addLog(genai ? 'API key updated' : 'Failed to set API key', genai ? 'success' : 'error');
-            } else {
-                apiKeyStatus.textContent = '❌ Please enter a key';
-                apiKeyStatus.style.color = '#ef4444';
             }
         }
-
         setApiKeyBtn.addEventListener('click', setApiKey);
         apiKeyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') setApiKey(); });
 
@@ -876,15 +372,13 @@
             const msgSpan = document.createElement('span');
             msgSpan.className = `log-msg ${type}`;
             msgSpan.textContent = msg;
-            entry.appendChild(timeSpan);
-            entry.appendChild(msgSpan);
+            entry.appendChild(timeSpan); entry.appendChild(msgSpan);
             logPanel.appendChild(entry);
             logPanel.scrollTop = logPanel.scrollHeight;
         }
 
         // ─── VOICE SYSTEM ─────────────────────────────────────────────
         function getLangPrefix() { return langSel.value; }
-
         function getLangCode() { return langSel.value === 'hi' ? 'hi-IN' : 'en-US'; }
 
         function loadVoices() {
@@ -908,9 +402,7 @@
             if (best >= 0 && langVoices[best]) voiceSel.value = allVoices.indexOf(langVoices[best]);
             else if (langVoices.length) voiceSel.value = allVoices.indexOf(langVoices[0]);
             const langName = prefix === 'hi' ? 'Hindi' : 'English';
-            voiceHint.textContent = langVoices.length ?
-                `${langVoices.length} ${langName} voices found` :
-                `No ${langName} voices — using best available`;
+            voiceHint.textContent = langVoices.length ? `${langVoices.length} ${langName} voices found` : `No ${langName} voices — using best available`;
             if (!langVoices.length) voiceHint.style.color = '#f59e0b';
             else voiceHint.style.color = 'var(--muted)';
             updatePreviewBtn();
@@ -922,23 +414,17 @@
         speedSlider.addEventListener('input', () => { speedVal.textContent = parseFloat(speedSlider.value).toFixed(1); });
 
         function getVoice() { const v = speechSynthesis.getVoices(); return v[parseInt(voiceSel.value)] || v[0] || null; }
-
         function updatePreviewBtn() { previewVoiceBtn.disabled = !inp.value.trim() || inp.value.trim().split(/\s+/).length < 3; }
-
         previewVoiceBtn.addEventListener('click', () => {
             speechSynthesis.cancel();
             const t = inp.value.trim().slice(0, 80) + (inp.value.trim().length > 80 ? '...' : '');
             const u = new SpeechSynthesisUtterance(t);
-            u.voice = getVoice();
-            u.rate = parseFloat(speedSlider.value);
-            u.pitch = 1;
-            u.lang = getLangCode();
+            u.voice = getVoice(); u.rate = parseFloat(speedSlider.value); u.pitch = 1; u.lang = getLangCode();
             setBadge('voice', 'Previewing...');
             u.onend = u.onerror = () => setBadge('idle', 'Ready');
             speechSynthesis.speak(u);
         });
 
-        // ─── INPUT ────────────────────────────────────────────────────
         inp.addEventListener('input', () => {
             const n = inp.value.trim().split(/\s+/).filter(Boolean).length;
             $('wc').textContent = `${n} word${n !== 1 ? 's' : ''}`;
@@ -953,8 +439,7 @@
 
         // ─── TEXT SPLITTING ───────────────────────────────────────────
         function splitText(text) {
-            const out = [],
-                sents = text.match(/[^.!?।]+[.!?।]+/g) || [text];
+            const out = [], sents = text.match(/[^.!?।]+[.!?।]+/g) || [text];
             for (const s of sents) {
                 const w = s.trim().split(/\s+/).filter(Boolean);
                 if (w.length <= WPS) { if (w.length) out.push(w.join(' ')); continue; }
@@ -963,10 +448,9 @@
                 for (const p of parts) {
                     const pw = p.trim().split(/\s+/).filter(Boolean).length;
                     const bw = buf ? buf.split(/\s+/).filter(Boolean).length : 0;
-                    if (bw + pw > WPS && buf) { out.push(buf.trim());
-                        buf = p; } else { buf += (buf ? ' ' : '') + p; }
-                    if (buf.split(/\s+/).filter(Boolean).length >= WPS) { out.push(buf.trim());
-                        buf = ''; }
+                    if (bw + pw > WPS && buf) { out.push(buf.trim()); buf = p; }
+                    else { buf += (buf ? ' ' : '') + p; }
+                    if (buf.split(/\s+/).filter(Boolean).length >= WPS) { out.push(buf.trim()); buf = ''; }
                 }
                 if (buf) { const rw = buf.trim().split(/\s+/).filter(Boolean); for (let i = 0; i < rw.length; i += WPS) out.push(rw.slice(i, i + WPS).join(' ')); }
             }
@@ -984,7 +468,7 @@
                     img2.crossOrigin = 'anonymous';
                     img2.onload = () => res(img2);
                     img2.onerror = rej;
-                    img2.src = url.replace(/seed\/[^/]+/, `seed/r${Math.random().toString(36).slice(2, 8)}`);
+                    img2.src = url.replace(/seed\/[^/]+/, `seed/r${Math.random().toString(36).slice(2,8)}`);
                 };
                 img.src = url;
             });
@@ -992,124 +476,84 @@
 
         // ─── KEN BURNS ────────────────────────────────────────────────
         const KB = [
-            { sS: 1, eS: 1.16, sX: 0, sY: 0, eX: -.04, eY: -.04 },
-            { sS: 1.12, eS: 1, sX: -.04, sY: 0, eX: 0, eY: 0 },
-            { sS: 1, eS: 1.14, sX: 0, sY: -.03, eX: -.03, eY: .01 },
-            { sS: 1.1, eS: 1, sX: .03, sY: 0, eX: -.01, eY: -.03 },
-            { sS: 1, eS: 1.18, sX: -.02, sY: -.02, eX: .01, eY: .01 },
-            { sS: 1.06, eS: 1.14, sX: .02, sY: -.01, eX: -.02, eY: .02 },
+            { sS:1, eS:1.16, sX:0, sY:0, eX:-.04, eY:-.04 },
+            { sS:1.12, eS:1, sX:-.04, sY:0, eX:0, eY:0 },
+            { sS:1, eS:1.14, sX:0, sY:-.03, eX:-.03, eY:.01 },
+            { sS:1.1, eS:1, sX:.03, sY:0, eX:-.01, eY:-.03 },
+            { sS:1, eS:1.18, sX:-.02, sY:-.02, eX:.01, eY:.01 },
+            { sS:1.06, eS:1.14, sX:.02, sY:-.01, eX:-.02, eY:.02 },
         ];
-
         function getKB(i) { return KB[i % KB.length]; }
 
         function drawCover(img, sc, ox, oy, a) {
-            const ir = img.width / img.height,
-                cr = CW / CH;
+            const ir = img.width / img.height, cr = CW / CH;
             let dw, dh;
-            if (ir > cr) { dh = CH * sc;
-                dw = dh * ir; } else { dw = CW * sc;
-                dh = dw / ir; }
-            ctx.save();
-            ctx.globalAlpha = a;
+            if (ir > cr) { dh = CH * sc; dw = dh * ir; } else { dw = CW * sc; dh = dw / ir; }
+            ctx.save(); ctx.globalAlpha = a;
             ctx.drawImage(img, (CW - dw) / 2 + ox * CW, (CH - dh) / 2 + oy * CH, dw, dh);
             ctx.restore();
         }
 
         function drawFrame(idx, prog) {
             if (idx >= imgs.length) return;
-            const img = imgs[idx],
-                kb = getKB(idx);
+            const img = imgs[idx], kb = getKB(idx);
             const t = prog < .5 ? 2 * prog * prog : 1 - Math.pow(-2 * prog + 2, 2) / 2;
             const sc = kb.sS + (kb.eS - kb.sS) * t;
             const ox = kb.sX + (kb.eX - kb.sX) * t;
             const oy = kb.sY + (kb.eY - kb.sY) * t;
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, CW, CH);
+            ctx.fillStyle = '#000'; ctx.fillRect(0, 0, CW, CH);
             if (idx > 0 && prog < TRANS_MS / SLIDE_MS) {
-                const fp = prog / (TRANS_MS / SLIDE_MS),
-                    pk = getKB(idx - 1);
+                const fp = prog / (TRANS_MS / SLIDE_MS), pk = getKB(idx - 1);
                 drawCover(imgs[idx - 1], pk.eS, pk.eX, pk.eY, 1 - fp);
                 drawCover(img, sc, ox, oy, fp);
             } else { drawCover(img, sc, ox, oy, 1); }
-            ctx.fillStyle = 'rgba(232,145,58,0.04)';
-            ctx.fillRect(0, 0, CW, CH);
-            ctx.fillStyle = 'rgba(0,0,0,0.12)';
-            ctx.fillRect(0, 0, CW, CH);
-            const vig = ctx.createRadialGradient(CW / 2, CH / 2, CW * .28, CW / 2, CH / 2, CW * .78);
-            vig.addColorStop(0, 'rgba(0,0,0,0)');
-            vig.addColorStop(1, 'rgba(0,0,0,0.55)');
-            ctx.fillStyle = vig;
-            ctx.fillRect(0, 0, CW, CH);
+            ctx.fillStyle = 'rgba(232,145,58,0.04)'; ctx.fillRect(0, 0, CW, CH);
+            ctx.fillStyle = 'rgba(0,0,0,0.12)'; ctx.fillRect(0, 0, CW, CH);
+            const vig = ctx.createRadialGradient(CW/2, CH/2, CW*.28, CW/2, CH/2, CW*.78);
+            vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,0.55)');
+            ctx.fillStyle = vig; ctx.fillRect(0, 0, CW, CH);
             if (segs[idx]) {
                 const txt = segs[idx];
                 const alpha = Math.min(Math.min(1, prog * 5), Math.min(1, (1 - prog) * 5));
-                ctx.save();
-                ctx.globalAlpha = alpha;
+                ctx.save(); ctx.globalAlpha = alpha;
                 ctx.font = '600 28px "Space Grotesk",sans-serif';
                 let disp = txt;
                 while (ctx.measureText(disp).width > CW - 152 && disp.length > 8) disp = disp.slice(0, -1);
                 if (disp !== txt) disp += '...';
-                const tw = ctx.measureText(disp).width,
-                    pad = 36;
-                const bw = Math.min(tw + pad * 2, CW - 80),
-                    bh = 54;
-                const bx = (CW - bw) / 2,
-                    by = CH * .82,
-                    r = 12;
+                const tw = ctx.measureText(disp).width, pad = 36;
+                const bw = Math.min(tw + pad * 2, CW - 80), bh = 54;
+                const bx = (CW - bw) / 2, by = CH * .82, r = 12;
                 ctx.beginPath();
-                ctx.moveTo(bx + r, by);
-                ctx.lineTo(bx + bw - r, by);
-                ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + r);
-                ctx.lineTo(bx + bw, by + bh - r);
-                ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - r, by + bh);
-                ctx.lineTo(bx + r, by + bh);
-                ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - r);
-                ctx.lineTo(bx, by + r);
-                ctx.quadraticCurveTo(bx, by, bx + r, by);
-                ctx.closePath();
-                ctx.fillStyle = 'rgba(0,0,0,0.72)';
-                ctx.fill();
-                ctx.beginPath();
-                ctx.moveTo(bx + r, by);
-                ctx.lineTo(bx + bw - r, by);
-                ctx.strokeStyle = 'rgba(232,145,58,0.85)';
-                ctx.lineWidth = 2.5;
-                ctx.stroke();
-                ctx.fillStyle = '#fff';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.shadowColor = 'rgba(0,0,0,0.6)';
-                ctx.shadowBlur = 10;
-                ctx.shadowOffsetY = 2;
-                ctx.fillText(disp, CW / 2, by + bh / 2);
-                ctx.shadowBlur = 0;
-                ctx.shadowOffsetY = 0;
-                ctx.restore();
+                ctx.moveTo(bx+r, by); ctx.lineTo(bx+bw-r, by);
+                ctx.quadraticCurveTo(bx+bw, by, bx+bw, by+r);
+                ctx.lineTo(bx+bw, by+bh-r); ctx.quadraticCurveTo(bx+bw, by+bh, bx+bw-r, by+bh);
+                ctx.lineTo(bx+r, by+bh); ctx.quadraticCurveTo(bx, by+bh, bx, by+bh-r);
+                ctx.lineTo(bx, by+r); ctx.quadraticCurveTo(bx, by, bx+r, by);
+                ctx.closePath(); ctx.fillStyle = 'rgba(0,0,0,0.72)'; ctx.fill();
+                ctx.beginPath(); ctx.moveTo(bx+r, by); ctx.lineTo(bx+bw-r, by);
+                ctx.strokeStyle = 'rgba(232,145,58,0.85)'; ctx.lineWidth = 2.5; ctx.stroke();
+                ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 2;
+                ctx.fillText(disp, CW/2, by + bh/2);
+                ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; ctx.restore();
             }
             ctx.font = '500 15px "Space Grotesk",sans-serif';
-            ctx.fillStyle = 'rgba(255,255,255,0.4)';
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'top';
+            ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.textAlign = 'right'; ctx.textBaseline = 'top';
             ctx.fillText(`${idx+1} / ${segs.length}`, CW - 32, CH * .1 + 4);
             if (playing && !ttsEnded) {
-                const now = performance.now(),
-                    dx = 28,
-                    dy = CH * .1 + 6;
+                const now = performance.now(), dx = 28, dy = CH * .1 + 6;
                 for (let i = 0; i < 4; i++) {
                     const h = 6 + Math.sin(now * .008 + i * 1.2) * 7;
                     ctx.fillStyle = `rgba(168,85,247,${(.5 + Math.sin(now * .006 + i) * .3).toFixed(2)})`;
                     ctx.fillRect(dx + i * 6, dy + 12 - h / 2, 3, h);
                 }
                 ctx.font = '500 13px "Space Grotesk",sans-serif';
-                ctx.fillStyle = 'rgba(168,85,247,0.7)';
-                ctx.textAlign = 'left';
+                ctx.fillStyle = 'rgba(168,85,247,0.7)'; ctx.textAlign = 'left';
                 ctx.fillText('NARRATING', dx + 30, dy + 4);
             }
             const totalProg = (idx + prog) / segs.length;
-            ctx.fillStyle = 'rgba(255,255,255,0.1)';
-            ctx.fillRect(0, CH * .925, CW, 3);
-            ctx.fillStyle = '#e8913a';
-            ctx.fillRect(0, CH * .925, CW * totalProg, 3);
+            ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fillRect(0, CH * .925, CW, 3);
+            ctx.fillStyle = '#e8913a'; ctx.fillRect(0, CH * .925, CW * totalProg, 3);
         }
 
         function animate(ts) {
@@ -1131,95 +575,51 @@
 
         function setBadge(type, txt) {
             badge.className = `badge b-${type}`;
-            const icons = { idle: 'fa-circle', load: 'fa-spinner', play: 'fa-play', voice: 'fa-microphone-lines', done: 'fa-check',
-                dl: 'fa-download', yt: 'fa-upload' };
+            const icons = { idle:'fa-circle', load:'fa-spinner', play:'fa-play', voice:'fa-microphone-lines', done:'fa-check', dl:'fa-download', yt:'fa-upload' };
             const sz = type === 'idle' ? '.35rem' : '.7rem';
             const spin = type === 'load' ? 'animation:spin .7s linear infinite;' : '';
             badge.innerHTML = `<i class="fas ${icons[type]||'fa-circle'}" style="font-size:${sz};${spin}"></i> ${txt}`;
         }
 
-        function setProg(pct, lbl) {
-            progSec.style.display = 'block';
-            progBar.style.width = pct + '%';
-            progPct.textContent = Math.round(pct) + '%';
-            if (lbl) progLbl.textContent = lbl;
-        }
+        function setProg(pct, lbl) { progSec.style.display = 'block'; progBar.style.width = pct + '%'; progPct.textContent = Math.round(pct) + '%'; if (lbl) progLbl.textContent = lbl; }
 
         let toastTimer;
-
         function toast(msg, icon = 'fa-check-circle', color = '#22c55e') {
             const el = $('toast');
-            $('tIcon').className = `fas ${icon}`;
-            $('tIcon').style.color = color;
-            $('tMsg').textContent = msg;
-            el.classList.add('vis');
-            clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => el.classList.remove('vis'), 3500);
+            $('tIcon').className = `fas ${icon}`; $('tIcon').style.color = color;
+            $('tMsg').textContent = msg; el.classList.add('vis');
+            clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('vis'), 3500);
         }
 
-        // ─── AUDIO + VIDEO RECORDING ──────────────────────────────────
+        // ─── RECORDING ──────────────────────────────────────────────────
         async function setupAudioStream() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    audio: { systemAudio: 'include', echoCancellation: false, noiseSuppression: false,
-                        autoGainControl: false }
-                });
-                return stream;
-            } catch (e) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    return stream;
-                } catch (e2) { return null; }
-            }
+            try { return await navigator.mediaDevices.getUserMedia({ audio: { systemAudio:'include', echoCancellation:false, noiseSuppression:false, autoGainControl:false } }); }
+            catch { try { return await navigator.mediaDevices.getUserMedia({ audio:true }); } catch { return null; } }
         }
 
         function createVideoFromText(text) {
             return new Promise(async (resolve, reject) => {
                 try {
-                    if (playing) {
-                        playing = false;
-                        if (animId) cancelAnimationFrame(animId);
-                        if (speakUtter) speechSynthesis.cancel();
-                        if (recorder && recorder.state === 'recording') recorder.stop();
-                        if (combinedStream) { combinedStream.getTracks().forEach(t => t.stop());
-                            combinedStream = null; }
-                    }
-                    segs = [];
-                    imgs = [];
-                    videoBlob = null;
-                    recChunks = [];
-                    dlBtn.disabled = true;
-                    dlBtn2.disabled = true;
-                    $('ytUploadBtn').disabled = true;
-                    fileInfo.classList.remove('show');
-                    ytSection.classList.remove('show');
-                    doneOv.style.display = 'none';
-                    idleOv.style.display = 'none';
+                    if (playing) { playing = false; if (animId) cancelAnimationFrame(animId); if (speakUtter) speechSynthesis.cancel(); if (recorder && recorder.state === 'recording') recorder.stop(); if (combinedStream) { combinedStream.getTracks().forEach(t => t.stop()); combinedStream = null; } }
+                    segs = []; imgs = []; videoBlob = null; recChunks = [];
+                    dlBtn.disabled = true; dlBtn2.disabled = true; $('ytUploadBtn').disabled = true;
+                    fileInfo.classList.remove('show'); ytSection.classList.remove('show');
+                    doneOv.style.display = 'none'; idleOv.style.display = 'none';
                     segs = splitText(text);
                     if (!segs.length) { reject('No sentences found'); return; }
                     setBadge('load', 'Loading images...');
-                    genBtn.disabled = true;
-                    stopBtn.disabled = false;
-                    progSec.style.display = 'block';
+                    genBtn.disabled = true; stopBtn.disabled = false; progSec.style.display = 'block';
                     for (let i = 0; i < segs.length; i++) {
-                        const seed = `s${Date.now()}${i}${Math.random().toString(36).slice(2, 6)}`;
+                        const seed = `s${Date.now()}${i}${Math.random().toString(36).slice(2,6)}`;
                         try { imgs.push(await loadImg(`https://picsum.photos/seed/${seed}/1280/720.jpg`)); } catch {
-                            const c = document.createElement('canvas');
-                            c.width = 1280;
-                            c.height = 720;
-                            const cx = c.getContext('2d'),
-                                hue = (i * 37) % 360;
-                            cx.fillStyle = `hsl(${hue},30%,18%)`;
-                            cx.fillRect(0, 0, 1280, 720);
+                            const c = document.createElement('canvas'); c.width = 1280; c.height = 720;
+                            const cx = c.getContext('2d'), hue = (i * 37) % 360;
+                            cx.fillStyle = `hsl(${hue},30%,18%)`; cx.fillRect(0, 0, 1280, 720);
                             cx.font = '600 48px "Space Grotesk",sans-serif';
-                            cx.fillStyle = `hsl(${hue},40%,50%)`;
-                            cx.textAlign = 'center';
-                            cx.textBaseline = 'middle';
+                            cx.fillStyle = `hsl(${hue},40%,50%)`; cx.textAlign = 'center'; cx.textBaseline = 'middle';
                             cx.fillText(`Scene ${i+1}`, 640, 360);
-                            const im = new Image();
-                            im.src = c.toDataURL();
-                            await new Promise(r => { im.onload = r; });
-                            imgs.push(im);
+                            const im = new Image(); im.src = c.toDataURL();
+                            await new Promise(r => { im.onload = r; }); imgs.push(im);
                         }
                         setProg(((i + 1) / segs.length) * 70, `Loading image ${i+1} of ${segs.length}...`);
                     }
@@ -1230,12 +630,8 @@
                     await new Promise(r => setTimeout(r, 200));
                     setProg(85, 'Starting narration...');
                     speakUtter = new SpeechSynthesisUtterance(text);
-                    speakUtter.rate = parseFloat(speedSlider.value);
-                    speakUtter.pitch = 1;
-                    speakUtter.lang = getLangCode();
-                    const sv = getVoice();
-                    if (sv) { speakUtter.voice = sv;
-                        speakUtter.lang = sv.lang; }
+                    speakUtter.rate = parseFloat(speedSlider.value); speakUtter.pitch = 1; speakUtter.lang = getLangCode();
+                    const sv = getVoice(); if (sv) { speakUtter.voice = sv; speakUtter.lang = sv.lang; }
                     speakUtter.onstart = () => setBadge('voice', 'Narrating...');
                     speakUtter.onend = () => {
                         ttsEnded = true;
@@ -1245,19 +641,12 @@
                             setTimeout(() => { if (playing) stopRecordingAndResolve(); }, waitMs);
                         }
                     };
-                    speakUtter.onerror = (e) => { if (playing) stopRecordingAndResolve(); };
-                    playing = true;
-                    t0 = 0;
-                    ttsEnded = false;
+                    speakUtter.onerror = () => { if (playing) stopRecordingAndResolve(); };
+                    playing = true; t0 = 0; ttsEnded = false;
                     setProg(90, 'Recording video + audio...');
-                    setTimeout(() => {
-                        speechSynthesis.speak(speakUtter);
-                        animId = requestAnimationFrame(animate);
-                    }, 300);
+                    setTimeout(() => { speechSynthesis.speak(speakUtter); animId = requestAnimationFrame(animate); }, 300);
 
-                    function stopRecordingAndResolve() {
-                        if (recorder && recorder.state === 'recording') recorder.stop();
-                    }
+                    function stopRecordingAndResolve() { if (recorder && recorder.state === 'recording') recorder.stop(); }
                     const recorderStopPromise = new Promise((res) => {
                         const originalOnstop = recorder.onstop;
                         recorder.onstop = () => {
@@ -1266,7 +655,7 @@
                             else setTimeout(() => res(videoBlob), 1000);
                         };
                     });
-                    recorder.onerror = (e) => { reject('Recorder error'); };
+                    recorder.onerror = () => { reject('Recorder error'); };
                     const blob = await recorderStopPromise;
                     resolve(blob);
                 } catch (e) { reject(e); }
@@ -1275,8 +664,7 @@
 
         async function startRecordingWithAudio() {
             recChunks = [];
-            if (videoUrl) { URL.revokeObjectURL(videoUrl);
-                videoUrl = null; }
+            if (videoUrl) { URL.revokeObjectURL(videoUrl); videoUrl = null; }
             videoBlob = null;
             try {
                 const canvasStream = cv.captureStream(30);
@@ -1287,21 +675,13 @@
                 const audioTrack = audioStream.getAudioTracks()[0];
                 if (!audioTrack) throw new Error('No audio track');
                 combinedStream = new MediaStream();
-                combinedStream.addTrack(videoTrack);
-                combinedStream.addTrack(audioTrack);
+                combinedStream.addTrack(videoTrack); combinedStream.addTrack(audioTrack);
                 let mime = '';
-                for (const c of [
-                        'video/webm;codecs=vp8,opus',
-                        'video/webm;codecs=vp9,opus',
-                        'video/webm;codecs=vp8',
-                        'video/webm;codecs=vp9',
-                        'video/webm'
-                    ]) {
+                for (const c of ['video/webm;codecs=vp8,opus','video/webm;codecs=vp9,opus','video/webm;codecs=vp8','video/webm;codecs=vp9','video/webm']) {
                     if (MediaRecorder.isTypeSupported(c)) { mime = c; break; }
                 }
                 if (!mime) mime = 'video/webm';
-                recorder = new MediaRecorder(combinedStream, { mimeType: mime, videoBitsPerSecond: 4000000,
-                    audioBitsPerSecond: 128000 });
+                recorder = new MediaRecorder(combinedStream, { mimeType: mime, videoBitsPerSecond: 4000000, audioBitsPerSecond: 128000 });
                 recorder.ondataavailable = e => { if (e.data && e.data.size > 0) recChunks.push(e.data); };
                 recorder.onstop = () => {
                     videoBlob = new Blob(recChunks, { type: 'video/webm' });
@@ -1309,12 +689,9 @@
                     const durSecs = (segs.length * SLIDE_MS / 1000).toFixed(0);
                     const fn = `story-video-${Date.now()}.webm`;
                     fileName.textContent = fn;
-                    fileMeta.textContent =
-                        `1280x720 \u00b7 ${durSecs}s \u00b7 ${fmtBytes(videoBlob.size)} \u00b7 VP8+Opus \u00b7 30fps`;
-                    fileInfo.classList.add('show');
-                    ytSection.classList.add('show');
-                    dlBtn.disabled = false;
-                    dlBtn2.disabled = false;
+                    fileMeta.textContent = `1280x720 \u00b7 ${durSecs}s \u00b7 ${fmtBytes(videoBlob.size)} \u00b7 VP8+Opus \u00b7 30fps`;
+                    fileInfo.classList.add('show'); ytSection.classList.add('show');
+                    dlBtn.disabled = false; dlBtn2.disabled = false;
                     if (accessToken) $('ytUploadBtn').disabled = false;
                     setBadge('done', 'Video ready');
                     setProg(100, 'Video ready!');
@@ -1335,22 +712,20 @@
                 if (animId) cancelAnimationFrame(animId);
                 if (speakUtter) speechSynthesis.cancel();
                 if (recorder && recorder.state === 'recording') recorder.stop();
-                if (combinedStream) { combinedStream.getTracks().forEach(t => t.stop());
-                    combinedStream = null; }
-                t0 = 0;
-                ttsEnded = false;
-                stopBtn.disabled = true;
-                genBtn.disabled = false;
+                if (combinedStream) { combinedStream.getTracks().forEach(t => t.stop()); combinedStream = null; }
+                t0 = 0; ttsEnded = false;
+                stopBtn.disabled = true; genBtn.disabled = false;
                 doneOv.style.display = 'flex';
             }
         }
 
-        // ─── GEMINI API with RETRY (using SDK) ────────────────────────
+        // ─── GEMINI API with SMART RETRY ──────────────────────────────
         function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-        async function generateWithRetry(prompt, retries = 3, delay = 1500) {
+        async function generateWithRetry(prompt, retries = 5, delay = 2000) {
             if (!genai) throw new Error('Gemini SDK not initialized. Please set your API key.');
-            const modelName = 'gemini-2.5-flash'; // You can change this to any model your key supports
+            // Use gemini-1.5-flash (higher quota: 60/min vs 20/day for 2.5-flash)
+            const modelName = 'gemini-1.5-flash';
 
             for (let attempt = 1; attempt <= retries; attempt++) {
                 try {
@@ -1360,16 +735,27 @@
                     });
                     return response.text;
                 } catch (error) {
-                    const isBusy = error.message && (error.message.includes('503') || error.message.includes('UNAVAILABLE'));
-                    if (isBusy && attempt < retries) {
-                        const waitTime = delay * Math.pow(2, attempt - 1);
-                        addLog(`Server busy (503). Retrying in ${(waitTime/1000).toFixed(1)}s... (Attempt ${attempt}/${retries})`, 'warning');
+                    const errText = error.message || '';
+                    const isQuota = errText.includes('429') || errText.includes('RESOURCE_EXHAUSTED') || errText.includes('quota');
+                    const isLeaked = errText.includes('403') && errText.includes('leaked');
+                    if (isLeaked) {
+                        throw new Error('API key was reported as leaked. Please generate a new key from Google AI Studio.');
+                    }
+                    if (isQuota && attempt < retries) {
+                        // Try to extract retryDelay from error message
+                        let waitTime = delay * Math.pow(1.5, attempt - 1);
+                        const delayMatch = errText.match(/retry in (\d+\.?\d*)s/i);
+                        if (delayMatch) {
+                            waitTime = parseFloat(delayMatch[1]) * 1000 + 2000; // add 2s buffer
+                        }
+                        addLog(`Quota exceeded (429). Waiting ${(waitTime/1000).toFixed(0)}s... (Attempt ${attempt}/${retries})`, 'warning');
                         await wait(waitTime);
                         continue;
                     }
                     throw error;
                 }
             }
+            throw new Error('Max retries exceeded for Gemini API.');
         }
 
         async function generateStoryFromGemini(genre) {
@@ -1396,7 +782,7 @@
             stopBtn.disabled = false;
             loopStatus.style.display = 'flex';
             let iteration = 0;
-            addLog('🚀 Auto‑loop started (Gemini 2.5 Flash with retry)', 'info');
+            addLog('🚀 Auto‑loop started (gemini-1.5-flash with smart retry)', 'info');
 
             while (!stopRequested) {
                 iteration++;
@@ -1443,7 +829,10 @@
                     addLog(`Iteration ${iteration} ERROR: ${err.message || 'unknown'}`, 'error');
                     toast(`Error: ${err.message || 'unknown'}`, 'fa-triangle-exclamation', '#ef4444');
                 }
-                await new Promise(r => setTimeout(r, 1000));
+                // Wait for user-defined delay between iterations
+                const delaySec = parseInt(autoDelay.value) || 15;
+                addLog(`Waiting ${delaySec}s before next iteration...`, 'info');
+                await wait(delaySec * 1000);
                 if (stopRequested) break;
             }
 
@@ -1469,17 +858,14 @@
             const fd = new FormData();
             fd.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
             fd.append('file', videoBlob, fileName.textContent);
-            const res = await fetch(
-                'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=multipart&part=snippet,status', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${accessToken}` },
-                    body: fd
-                });
+            const res = await fetch('https://www.googleapis.com/upload/youtube/v3/videos?uploadType=multipart&part=snippet,status', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${accessToken}` },
+                body: fd
+            });
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({}));
-                if (res.status === 401) { accessToken = null;
-                    updateYtUI(false);
-                    throw new Error('Session expired. Sign in again.'); }
+                if (res.status === 401) { accessToken = null; updateYtUI(false); throw new Error('Session expired. Sign in again.'); }
                 throw new Error(errData.error?.message || `Upload failed (${res.status})`);
             }
             const data = await res.json();
@@ -1494,12 +880,8 @@
                     client_id: YT_CLIENT_ID,
                     scope: 'https://www.googleapis.com/auth/youtube.upload',
                     callback: (response) => {
-                        if (response.access_token) { accessToken = response.access_token;
-                            updateYtUI(true);
-                            addLog('YouTube connected', 'success');
-                            toast('YouTube connected!', 'fa-check-circle', '#22c55e'); } else if (response.error !==
-                            'popup_closed') { toast('Sign-in failed', 'fa-triangle-exclamation', '#ef4444');
-                            addLog('YouTube sign-in failed: ' + response.error, 'error'); }
+                        if (response.access_token) { accessToken = response.access_token; updateYtUI(true); addLog('YouTube connected', 'success'); toast('YouTube connected!', 'fa-check-circle', '#22c55e'); }
+                        else if (response.error !== 'popup_closed') { toast('Sign-in failed', 'fa-triangle-exclamation', '#ef4444'); addLog('YouTube sign-in failed: ' + response.error, 'error'); }
                     }
                 });
             } catch (e) { addLog('Google Sign-In not available', 'error'); }
@@ -1517,57 +899,46 @@
         });
         $('ytSignOutBtn').addEventListener('click', () => {
             if (accessToken && google && google.accounts && google.accounts.oauth2) {
-                google.accounts.oauth2.revoke(accessToken, () => { accessToken = null;
-                    updateYtUI(false);
-                    addLog('YouTube signed out', 'info');
-                    toast('Signed out', 'fa-info-circle', '#f59e0b'); });
-            } else { accessToken = null;
-                updateYtUI(false); }
+                google.accounts.oauth2.revoke(accessToken, () => { accessToken = null; updateYtUI(false); addLog('YouTube signed out', 'info'); toast('Signed out', 'fa-info-circle', '#f59e0b'); });
+            } else { accessToken = null; updateYtUI(false); }
         });
 
         // ─── EVENT BINDINGS ───────────────────────────────────────────
         genBtn.addEventListener('click', () => { if (!loopRunning) runAutoLoop(); });
-        stopBtn.addEventListener('click', () => { stopRequested = true;
-            stopCurrentRecording(); });
+        stopBtn.addEventListener('click', () => { stopRequested = true; stopCurrentRecording(); });
 
         dlBtn.addEventListener('click', () => {
             if (!videoBlob) return;
             const a = document.createElement('a');
             a.href = videoUrl || URL.createObjectURL(videoBlob);
             a.download = fileName.textContent;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
             setBadge('dl', 'Downloaded');
             toast('Video downloaded!', 'fa-download', '#ef4444');
         });
         dlBtn2.addEventListener('click', () => { dlBtn.click(); });
 
         doneOv.addEventListener('click', () => { doneOv.style.display = 'none'; });
-        doneOv.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault();
-                doneOv.click(); } });
+        doneOv.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); doneOv.click(); } });
 
         // ─── INIT ──────────────────────────────────────────────────────
         window.addEventListener('load', () => {
-            // Auto-set the pre-filled key
             if (apiKeyInput.value.trim() === DEFAULT_API_KEY) {
                 GEMINI_API_KEY = DEFAULT_API_KEY;
                 initGenAI();
-                apiKeyStatus.textContent = genai ? '✅ Key set' : '❌ Invalid key';
-                apiKeyStatus.style.color = genai ? '#22c55e' : '#ef4444';
-                if (genai) addLog('Gemini API key auto-set from pre-filled value', 'success');
+                apiKeyStatus.textContent = genai ? '✅ Key set' : '⚠️ Key may be leaked – get a fresh one';
+                apiKeyStatus.style.color = genai ? '#22c55e' : '#f59e0b';
+                if (genai) addLog('Gemini API key auto-set', 'success');
+                else addLog('⚠️ Your API key may be leaked – please generate a new one from Google AI Studio', 'warning');
             }
             setTimeout(initYouTube, 500);
         });
 
         // Idle canvas
-        ctx.fillStyle = '#080706';
-        ctx.fillRect(0, 0, CW, CH);
-        const ig = ctx.createRadialGradient(CW / 2, CH / 2, 0, CW / 2, CH / 2, CW * .45);
-        ig.addColorStop(0, 'rgba(232,145,58,0.035)');
-        ig.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = ig;
-        ctx.fillRect(0, 0, CW, CH);
+        ctx.fillStyle = '#080706'; ctx.fillRect(0, 0, CW, CH);
+        const ig = ctx.createRadialGradient(CW/2, CH/2, 0, CW/2, CH/2, CW*.45);
+        ig.addColorStop(0, 'rgba(232,145,58,0.035)'); ig.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = ig; ctx.fillRect(0, 0, CW, CH);
 
         addLog('✅ Ready — click "Start Auto Loop"', 'success');
     </script>

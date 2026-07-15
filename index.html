@@ -8,22 +8,21 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        :root{--bg:#0c0b09;--bg2:#1a1816;--fg:#f5f0e8;--muted:#7a7268;--accent:#e8913a;--card:#151311;--border:#2a2622;--red:#ef4444;--green:#22c55e;--purple:#a855f7}
+        :root{--bg:#0c0b09;--bg2:#1a1816;--fg:#f5f0e8;--muted:#7a7268;--accent:#e8913a;--card:#151311;--border:#2a2622;--red:#ef4444;--green:#22c55e;--purple:#a855f7;--blue:#3b82f6;--yellow:#f59e0b}
         *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--fg);min-height:100vh;display:flex;align-items:center;justify-content:center}
-        body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 30% 20%,rgba(232,145,58,.06) 0%,transparent 55%);pointer-events:none}
-        .app{position:relative;z-index:1;width:100%;max-width:680px;padding:1.5rem}
+        body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--fg);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:1.5rem 1rem}
+        body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 30% 20%,rgba(232,145,58,.05) 0%,transparent 55%);pointer-events:none}
+        .app{position:relative;z-index:1;width:100%;max-width:700px}
 
-        .canvas-box{position:relative;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:16/9;box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 0 1px var(--border);margin-bottom:1rem}
+        .canvas-box{position:relative;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:16/9;box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 0 1px var(--border);margin-bottom:.8rem}
         .canvas-box canvas{width:100%;height:100%;display:block}
         .bar-top,.bar-bot{position:absolute;left:0;right:0;height:7%;background:#000;pointer-events:none;z-index:2}
         .bar-top{top:0}.bar-bot{bottom:0}
-
         .idle-ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:3;transition:opacity .4s}
 
-        .controls{display:flex;gap:.6rem;align-items:center;margin-bottom:.8rem;flex-wrap:wrap}
-        .btn{font-family:inherit;font-size:.88rem;font-weight:600;padding:.65rem 1.4rem;border-radius:10px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:.45rem;transition:all .25s}
-        .btn:disabled{opacity:.35;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+        .controls{display:flex;gap:.5rem;align-items:center;margin-bottom:.6rem;flex-wrap:wrap}
+        .btn{font-family:inherit;font-size:.85rem;font-weight:600;padding:.6rem 1.3rem;border-radius:9px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;transition:all .25s}
+        .btn:disabled{opacity:.3;cursor:not-allowed;transform:none!important;box-shadow:none!important}
         .btn-go{background:var(--accent);color:#0c0b09}
         .btn-go:hover:not(:disabled){background:#f0a050;transform:translateY(-1px);box-shadow:0 8px 24px rgba(232,145,58,.3)}
         .btn-stop{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff}
@@ -31,42 +30,53 @@
         .btn-signin{background:linear-gradient(135deg,#ea4335,#c5221f);color:#fff;margin:0 auto}
         .btn-signin:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 24px rgba(234,67,53,.3)}
 
-        .status-bar{display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;flex-wrap:wrap}
-        .badge{display:inline-flex;align-items:center;gap:.35rem;padding:.2rem .6rem;border-radius:16px;font-size:.72rem;font-weight:600}
-        .b-idle{background:var(--bg2);color:var(--muted)}
-        .b-run{background:rgba(232,145,58,.14);color:var(--accent)}
-        .b-done{background:rgba(34,197,94,.14);color:var(--green)}
-        .b-err{background:rgba(239,68,68,.14);color:var(--red)}
-        .stat{font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:.25rem}
-        .stat b{color:var(--fg);font-size:.85rem}
-        .genre-tag{margin-left:auto;font-size:.78rem;font-weight:600;color:var(--accent)}
+        .status-bar{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;flex-wrap:wrap}
+        .badge{display:inline-flex;align-items:center;gap:.3rem;padding:.18rem .55rem;border-radius:14px;font-size:.7rem;font-weight:600}
+        .b-idle{background:var(--bg2);color:var(--muted)}.b-run{background:rgba(232,145,58,.14);color:var(--accent)}.b-done{background:rgba(34,197,94,.14);color:var(--green)}.b-err{background:rgba(239,68,68,.14);color:var(--red)}
+        .stat{font-size:.72rem;color:var(--muted);display:flex;align-items:center;gap:.2rem}
+        .stat b{color:var(--fg);font-size:.82rem}
+        .genre-tag{margin-left:auto;font-size:.76rem;font-weight:600;color:var(--accent)}
 
-        .steps{display:flex;gap:.35rem;margin-bottom:.6rem}
-        .step{flex:1;padding:.3rem .15rem;border-radius:6px;text-align:center;font-size:.58rem;font-weight:600;color:var(--muted);background:var(--bg2);border:1px solid var(--border);transition:all .3s;text-transform:uppercase;letter-spacing:.3px}
-        .step i{display:block;font-size:.65rem;margin-bottom:.1rem}
+        .steps{display:flex;gap:.3rem;margin-bottom:.6rem}
+        .step{flex:1;padding:.28rem .1rem;border-radius:5px;text-align:center;font-size:.55rem;font-weight:600;color:var(--muted);background:var(--bg2);border:1px solid var(--border);transition:all .3s;text-transform:uppercase;letter-spacing:.3px}
+        .step i{display:block;font-size:.62rem;margin-bottom:.08rem}
         .step.active{color:var(--accent);border-color:var(--accent);background:rgba(232,145,58,.08)}
         .step.done{color:var(--green);border-color:var(--green);background:rgba(34,197,94,.08)}
         .step.err{color:var(--red);border-color:var(--red);background:rgba(239,68,68,.08)}
 
-        .log{max-height:120px;overflow-y:auto;display:none;flex-direction:column;gap:.15rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+        /* Progress panels */
+        .prog-panel{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.8rem;margin-bottom:.4rem;display:none;animation:fadeUp .3s ease-out}
+        .prog-panel.show{display:block}
+        .prog-head{display:flex;align-items:center;gap:.4rem;margin-bottom:.5rem}
+        .prog-head i{font-size:.8rem;width:18px;text-align:center}
+        .prog-head span{font-size:.78rem;font-weight:600;flex:1}
+        .prog-head .prog-pct{font-size:.72rem;font-weight:700;font-variant-numeric:tabular-nums}
+        .prog-track{width:100%;height:5px;background:var(--bg);border-radius:3px;overflow:hidden;margin-bottom:.35rem}
+        .prog-fill{height:100%;border-radius:3px;width:0%;transition:width .3s ease-out}
+        .prog-fill.c-accent{background:var(--accent)}.prog-fill.c-purple{background:var(--purple)}.prog-fill.c-blue{background:var(--blue)}.prog-fill.c-red{background:var(--red)}.prog-fill.c-green{background:var(--green)}.prog-fill.c-yellow{background:var(--yellow)}
+        .prog-detail{display:flex;gap:.8rem;font-size:.65rem;color:var(--muted)}
+        .prog-detail b{color:var(--fg);font-weight:600}
+        @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+        .prog-fill.indeterminate{width:30%!important;background:linear-gradient(90deg,var(--border) 25%,var(--muted) 50%,var(--border) 75%);background-size:200% 100%;animation:shimmer 1.5s ease-in-out infinite}
+
+        /* Log */
+        .log{max-height:140px;overflow-y:auto;display:none;flex-direction:column;gap:.12rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent;margin-top:.4rem}
         .log.show{display:flex}
-        .log-item{font-size:.68rem;padding:.2rem .45rem;border-radius:4px;background:var(--bg2);display:flex;gap:.35rem;line-height:1.3}
-        .log-item.ok{border-left:2px solid var(--green)}
-        .log-item.err{border-left:2px solid var(--red)}
-        .log-item.warn{border-left:2px solid #f59e0b}
-        .log-item.info{border-left:2px solid var(--muted)}
-        .log-time{color:var(--muted);font-size:.58rem;flex-shrink:0;min-width:38px}
+        .log-item{font-size:.66rem;padding:.18rem .4rem;border-radius:3px;background:var(--bg2);display:flex;gap:.3rem;line-height:1.3}
+        .log-item.ok{border-left:2px solid var(--green)}.log-item.err{border-left:2px solid var(--red)}.log-item.warn{border-left:2px solid #f59e0b}.log-item.info{border-left:2px solid var(--muted)}
+        .log-time{color:var(--muted);font-size:.56rem;flex-shrink:0;min-width:36px}
 
-        .note{text-align:center;margin-top:.8rem;font-size:.7rem;color:var(--muted);line-height:1.5}
-        .note a{color:var(--accent);text-decoration:none}
-        .note a:hover{text-decoration:underline}
+        .note{text-align:center;margin-top:.6rem;font-size:.66rem;color:var(--muted);line-height:1.5}
+        .note a{color:var(--accent);text-decoration:none}.note a:hover{text-decoration:underline}
 
-        .toast-el{position:fixed;bottom:1.2rem;right:1.2rem;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:.7rem 1rem;font-size:.82rem;box-shadow:0 10px 36px rgba(0,0,0,.45);transform:translateY(130%);transition:transform .4s cubic-bezier(.16,1,.3,1);z-index:200;display:flex;align-items:center;gap:.5rem;max-width:340px}
+        .toast-el{position:fixed;bottom:1.2rem;right:1.2rem;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:.65rem .9rem;font-size:.8rem;box-shadow:0 10px 36px rgba(0,0,0,.45);transform:translateY(130%);transition:transform .4s cubic-bezier(.16,1,.3,1);z-index:200;display:flex;align-items:center;gap:.45rem;max-width:320px}
         .toast-el.vis{transform:translateY(0)}
 
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}.pulse{animation:pulse 1.2s ease-in-out infinite}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes spin{to{transform:rotate(360deg)}}.spin{animation:spin .8s linear infinite}
         @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
-        @media(max-width:480px){.app{padding:1rem}.steps{flex-wrap:wrap}.step{min-width:calc(50% - .2rem)}}
+        @media(max-width:480px){.steps{flex-wrap:wrap}.step{min-width:calc(50% - .2rem)}.prog-detail{flex-wrap:wrap;gap:.4rem}}
     </style>
 </head>
 <body>
@@ -80,9 +90,9 @@
         </div>
     </div>
 
-    <div id="signinArea" style="text-align:center;margin-bottom:.8rem">
+    <div id="signinArea" style="text-align:center;margin-bottom:.6rem">
         <button id="signinBtn" class="btn btn-signin" disabled><i class="fab fa-google"></i> Sign in with Google</button>
-        <p style="font-size:.68rem;color:var(--muted);margin-top:.4rem" id="signinHint">Loading...</p>
+        <p style="font-size:.66rem;color:var(--muted);margin-top:.35rem" id="signinHint">Loading...</p>
     </div>
 
     <div id="controlArea" style="display:none">
@@ -91,7 +101,7 @@
             <button id="stopBtn" class="btn btn-stop" disabled><i class="fas fa-stop"></i> Stop</button>
         </div>
         <div class="status-bar">
-            <div id="badge" class="badge b-idle"><i class="fas fa-circle" style="font-size:.25rem"></i> Idle</div>
+            <div id="badge" class="badge b-idle"><i class="fas fa-circle" style="font-size:.22rem"></i> Idle</div>
             <div class="stat"><i class="fas fa-film" style="color:var(--accent)"></i> <b id="sGen">0</b></div>
             <div class="stat"><i class="fab fa-youtube" style="color:var(--red)"></i> <b id="sUp">0</b></div>
             <div class="stat"><i class="fas fa-xmark" style="color:#f59e0b"></i> <b id="sFail">0</b></div>
@@ -103,6 +113,73 @@
             <div class="step" data-s="record"><i class="fas fa-circle-dot"></i>Record</div>
             <div class="step" data-s="upload"><i class="fab fa-youtube"></i>Upload</div>
         </div>
+
+        <!-- Progress: Story -->
+        <div class="prog-panel" id="progStory">
+            <div class="prog-head">
+                <i class="fas fa-pen-fancy" style="color:var(--accent)"></i>
+                <span>Generating Story</span>
+                <span class="prog-pct" style="color:var(--accent)" id="progStoryPct">0%</span>
+            </div>
+            <div class="prog-track"><div class="prog-fill c-accent indeterminate" id="progStoryBar"></div></div>
+            <div class="prog-detail"><span>Genre: <b id="progStoryGenre">—</b></span><span id="progStoryTimer" style="margin-left:auto"><i class="fas fa-clock"></i> 0s</span></div>
+        </div>
+
+        <!-- Progress: Images -->
+        <div class="prog-panel" id="progImages">
+            <div class="prog-head">
+                <i class="fas fa-images" style="color:var(--purple)"></i>
+                <span>Loading Images</span>
+                <span class="prog-pct" style="color:var(--purple)" id="progImgPct">0/0</span>
+            </div>
+            <div class="prog-track"><div class="prog-fill c-purple" id="progImgBar"></div></div>
+            <div class="prog-detail"><span>Loaded: <b id="progImgCount">0</b></span><span>Failed: <b id="progImgFail" style="color:var(--red)">0</b></span><span id="progImgTimer" style="margin-left:auto"><i class="fas fa-clock"></i> 0s</span></div>
+        </div>
+
+        <!-- Progress: Recording -->
+        <div class="prog-panel" id="progRecord">
+            <div class="prog-head">
+                <i class="fas fa-circle-dot" style="color:var(--blue)"></i>
+                <span>Recording Video</span>
+                <span class="prog-pct" style="color:var(--blue)" id="progRecPct">0%</span>
+            </div>
+            <div class="prog-track"><div class="prog-fill c-blue" id="progRecBar"></div></div>
+            <div class="prog-detail">
+                <span>Slide: <b id="progRecSlide">0/0</b></span>
+                <span>Time: <b id="progRecTime">0s</b></span>
+                <span>Est: <b id="progRecEst">0s</b></span>
+                <span>Size: <b id="progRecSize">0 KB</b></span>
+                <span id="progRecTTS" style="margin-left:auto;color:var(--purple)"><i class="fas fa-microphone-lines"></i> Narrating</span>
+            </div>
+        </div>
+
+        <!-- Progress: Upload -->
+        <div class="prog-panel" id="progUpload">
+            <div class="prog-head">
+                <i class="fab fa-youtube" style="color:var(--red)"></i>
+                <span>Uploading to YouTube</span>
+                <span class="prog-pct" style="color:var(--red)" id="progUpPct">0%</span>
+            </div>
+            <div class="prog-track"><div class="prog-fill c-red" id="progUpBar"></div></div>
+            <div class="prog-detail"><span>Speed: <b id="progUpSpeed">—</b></span><span id="progUpSize" style="margin-left:auto">0 / 0 KB</span></div>
+        </div>
+
+        <!-- Cycle summary -->
+        <div class="prog-panel" id="progSummary">
+            <div class="prog-head">
+                <i class="fas fa-check-circle" style="color:var(--green)"></i>
+                <span style="color:var(--green)">Cycle Complete</span>
+                <span class="prog-pct" style="color:var(--green)" id="sumTime">0s</span>
+            </div>
+            <div class="prog-detail" style="font-size:.72rem">
+                <span><i class="fas fa-pen-fancy" style="color:var(--accent)"></i> Story: <b id="sumStory">0s</b></span>
+                <span><i class="fas fa-images" style="color:var(--purple)"></i> Images: <b id="sumImg">0s</b></span>
+                <span><i class="fas fa-circle-dot" style="color:var(--blue)"></i> Record: <b id="sumRec">0s</b></span>
+                <span><i class="fab fa-youtube" style="color:var(--red)"></i> Upload: <b id="sumUp">0s</b></span>
+                <span style="margin-left:auto"><i class="fas fa-hard-drive" style="color:var(--muted)"></i> <b id="sumSize">0 KB</b></span>
+            </div>
+        </div>
+
         <div id="logEl" class="log"></div>
     </div>
 
@@ -121,8 +198,15 @@ let utter=null,ttsEnded=false,recorder=null,recChunks=[],videoBlob=null;
 let accessToken=null,tokenClient=null,autoRunning=false,currentGenre='';
 let stats={gen:0,up:0,fail:0,cfail:0};
 
+/* Recording progress tracking */
+let recStartTime=0,recTimerInterval=null,recSizeInterval=null;
+
 const $=id=>document.getElementById(id);
 const cv=$('cv'),ctx=cv.getContext('2d');
+
+/* --- Progress panel helpers --- */
+function showPanel(id){document.querySelectorAll('.prog-panel').forEach(p=>p.classList.remove('show'));if(id)$(id).classList.add('show');}
+function setProg(barId,pctId,val,txt){const bar=$(barId);bar.classList.remove('indeterminate');bar.style.width=Math.min(100,Math.max(0,val))+'%';if(pctId)$(pctId).textContent=txt||Math.round(val)+'%';}
 
 /* --- Voice (auto-pick best) --- */
 function getVoice(){const v=speechSynthesis.getVoices();return v.find(x=>x.lang.startsWith('en')&&x.name.toLowerCase().includes('google'))||v.find(x=>x.lang.startsWith('en'))||v[0]||null;}
@@ -165,56 +249,122 @@ function animate(ts){if(!playing)return;if(!t0)t0=ts;const el=ts-t0;drawFrame(Ma
 
 /* --- UI helpers --- */
 function fmtB(b){return b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB';}
-function setBadge(t,txt){const el=$('badge');el.className=`badge b-${t}`;const ic={idle:'fa-circle',run:'fa-bolt',done:'fa-check',err:'fa-xmark'};el.innerHTML=`<i class="fas ${ic[t]||'fa-circle'}" style="font-size:${t==='idle'?'.25rem':'.6rem'};${t==='run'?'animation:pulse 1.2s ease-in-out infinite':''}"></i> ${txt}`;}
+function setBadge(t,txt){const el=$('badge');el.className=`badge b-${t}`;const ic={idle:'fa-circle',run:'fa-bolt',done:'fa-check',err:'fa-xmark'};el.innerHTML=`<i class="fas ${ic[t]||'fa-circle'}" style="font-size:${t==='idle'?'.22rem':'.55rem'};${t==='run'?'animation:pulse 1.2s ease-in-out infinite':''}"></i> ${txt}`;}
 function setStep(n,s){document.querySelectorAll('.step').forEach(e=>{e.classList.remove('active','done','err');if(e.dataset.s===n)e.classList.add(s);});}
 function upStats(){$('sGen').textContent=stats.gen;$('sUp').textContent=stats.up;$('sFail').textContent=stats.fail;}
-function addLog(m,t='info'){$('logEl').classList.add('show');const d=document.createElement('div');d.className='log-item '+t;const n=new Date();d.innerHTML=`<span class="log-time">${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}</span><span>${m}</span>`;$('logEl').prepend(d);while($('logEl').children.length>30)$('logEl').lastChild.remove();}
+function addLog(m,t='info'){$('logEl').classList.add('show');const d=document.createElement('div');d.className='log-item '+t;const n=new Date();d.innerHTML=`<span class="log-time">${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}</span><span>${m}</span>`;$('logEl').prepend(d);while($('logEl').children.length>50)$('logEl').lastChild.remove();}
 let toastT;function toast(m,ic='fa-check-circle',c='var(--green)'){$('tIco').className=`fas ${ic}`;$('tIco').style.color=c;$('tMsg').textContent=m;$('toast').classList.add('vis');clearTimeout(toastT);toastT=setTimeout(()=>$('toast').classList.remove('vis'),3500);}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
-/* --- Gemini story --- */
+/* --- Gemini story (with timed progress) --- */
 async function genStory(genre){
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`,{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({contents:[{parts:[{text:`Write a short story in the ${genre} genre. Around 400 words. Highly visual and descriptive, perfect for narration over images. Avoid excessive dialogue. Focus on vivid descriptions, action, atmosphere, sensory details. Complete sentences with proper punctuation. Satisfying conclusion.`}]}],generationConfig:{temperature:1.3,maxOutputTokens:1024}})
-    });
-    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||`API ${r.status}`);}
-    const d=await r.json();const t=d.candidates?.[0]?.content?.parts?.[0]?.text;if(!t)throw new Error('Empty response');return t.trim();
+    const t0=performance.now();
+    showPanel('progStory');$('progStoryGenre').textContent=genre;
+    $('progStoryBar').classList.add('indeterminate');
+    let timerI=setInterval(()=>{$('progStoryTimer').innerHTML=`<i class="fas fa-clock"></i> ${((performance.now()-t0)/1000).toFixed(1)}s`;},100);
+    try{
+        const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`,{
+            method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({contents:[{parts:[{text:`Write a short story in the ${genre} genre. Around 400 words. Highly visual and descriptive, perfect for narration over images. Avoid excessive dialogue. Focus on vivid descriptions, action, atmosphere, sensory details. Complete sentences with proper punctuation. Satisfying conclusion.`}]}],generationConfig:{temperature:1.3,maxOutputTokens:1024}})
+        });
+        clearInterval(timerI);
+        const elapsed=((performance.now()-t0)/1000).toFixed(1);
+        $('progStoryTimer').innerHTML=`<i class="fas fa-clock"></i> ${elapsed}s`;
+        if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||`API ${r.status}`);}
+        const d=await r.json();const t=d.candidates?.[0]?.content?.parts?.[0]?.text;if(!t)throw new Error('Empty response');
+        setProg('progStoryBar','progStoryPct',100);
+        addLog(`Story: ${t.trim().split(/\s+/).length} words in ${elapsed}s`,'ok');
+        return t.trim();
+    }catch(e){clearInterval(timerI);throw e;}
 }
 
-/* --- Video generation (promise) --- */
+/* --- Video generation (promise, with full progress) --- */
 function genVideo(text){
     return new Promise(async(resolve,reject)=>{
         segs=[];imgs=[];videoBlob=null;recChunks=[];
         segs=splitText(text);if(!segs.length){reject(new Error('Cannot split text'));return;}
-        for(let i=0;i<segs.length;i++){
+        const totalSegs=segs.length;
+        const imgT0=performance.now();
+        showPanel('progImages');
+        let imgOk=0,imgFail=0;
+        const imgTimerI=setInterval(()=>{$('progImgTimer').innerHTML=`<i class="fas fa-clock"></i> ${((performance.now()-imgT0)/1000).toFixed(1)}s`;},100);
+
+        for(let i=0;i<totalSegs;i++){
             const seed=`s${Date.now()}${i}${Math.random().toString(36).slice(2,6)}`;
-            try{imgs.push(await loadImg(`https://picsum.photos/seed/${seed}/1280/720.jpg`));}
-            catch{const c=document.createElement('canvas');c.width=1280;c.height=720;const cx=c.getContext('2d');cx.fillStyle=`hsl(${(i*37)%360},30%,18%)`;cx.fillRect(0,0,1280,720);cx.font='600 48px "Space Grotesk",sans-serif';cx.fillStyle=`hsl(${(i*37)%360},40%,50%)`;cx.textAlign='center';cx.textBaseline='middle';cx.fillText(`Scene ${i+1}`,640,360);const im=new Image();im.src=c.toDataURL();await new Promise(r=>{im.onload=r;});imgs.push(im);}
+            try{imgs.push(await loadImg(`https://picsum.photos/seed/${seed}/1280/720.jpg`));imgOk++;}
+            catch{imgFail++;const c=document.createElement('canvas');c.width=1280;c.height=720;const cx=c.getContext('2d');cx.fillStyle=`hsl(${(i*37)%360},30%,18%)`;cx.fillRect(0,0,1280,720);cx.font='600 48px "Space Grotesk",sans-serif';cx.fillStyle=`hsl(${(i*37)%360},40%,50%)`;cx.textAlign='center';cx.textBaseline='middle';cx.fillText(`Scene ${i+1}`,640,360);const im=new Image();im.src=c.toDataURL();await new Promise(r=>{im.onload=r;});imgs.push(im);}
+            const pct=((i+1)/totalSegs*100);
+            setProg('progImgBar','progImgPct',pct,`${i+1}/${totalSegs}`);
+            $('progImgCount').textContent=imgOk;$('progImgFail').textContent=imgFail;
+            addLog(`Image ${i+1}/${totalSegs} loaded`,'info');
         }
+        clearInterval(imgTimerI);
+        const imgElapsed=((performance.now()-imgT0)/1000).toFixed(1);
+        $('progImgTimer').innerHTML=`<i class="fas fa-clock"></i> ${imgElapsed}s`;
+        setProg('progImgBar','progImgPct',100,`${totalSegs}/${totalSegs}`);
+        addLog(`All ${totalSegs} images loaded in ${imgElapsed}s`,'ok');
+
+        /* Switch to recording panel */
+        showPanel('progRecord');
+        recStartTime=performance.now();
+        const estTotal=totalSegs*SLIDE_MS/1000;
+        $('progRecSlide').textContent=`0/${totalSegs}`;$('progRecTime').textContent='0s';$('progRecEst').textContent=estTotal.toFixed(0)+'s';$('progRecSize').textContent='0 KB';$('progRecTTS').innerHTML='<i class="fas fa-microphone-lines"></i> Narrating';$('progRecTTS').style.color='var(--purple)';
+        setProg('progRecBar','progRecPct',0);
+
+        recTimerInterval=setInterval(()=>{
+            const el=(performance.now()-recStartTime)/1000;
+            const pct=Math.min(100,el/estTotal*100);
+            const curSlide=Math.min(totalSegs,Math.floor(el/(SLIDE_MS/1000))+1);
+            $('progRecTime').textContent=el.toFixed(1)+'s';
+            $('progRecSlide').textContent=`${curSlide}/${totalSegs}`;
+            setProg('progRecBar','progRecPct',pct);
+            /* Estimate remaining */
+            const remain=Math.max(0,estTotal-el);
+            $('progRecEst').textContent=remain.toFixed(0)+'s left';
+            /* Size from chunks */
+            let sz=0;for(const c of recChunks)sz+=c.size;
+            $('progRecSize').textContent=fmtB(sz);
+            /* TTS status */
+            if(ttsEnded){$('progRecTTS').innerHTML='<i class="fas fa-check"></i> TTS done, finishing...';$('progRecTTS').style.color='var(--green)';}
+        },200);
+
         try{
             const stream=cv.captureStream(30);let mime='';
             for(const c of ['video/webm;codecs=vp8','video/webm;codecs=vp8,opus','video/webm']){if(MediaRecorder.isTypeSupported(c)){mime=c;break;}}
             if(!mime)mime='video/webm';
             recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:4000000});
             recorder.ondataavailable=e=>{if(e.data&&e.data.size>0)recChunks.push(e.data);};
-            recorder.onstop=()=>{videoBlob=new Blob(recChunks,{type:'video/webm'});resolve(videoBlob);};
-            recorder.onerror=()=>reject(new Error('Recorder failed'));recorder.start(200);
-        }catch(e){reject(e);return;}
+            recorder.onstop=()=>{
+                clearInterval(recTimerInterval);
+                const recElapsed=((performance.now()-recStartTime)/1000).toFixed(1);
+                videoBlob=new Blob(recChunks,{type:'video/webm'});
+                setProg('progRecBar','progRecPct',100);
+                $('progRecTime').textContent=recElapsed+'s';$('progRecEst').textContent='0s left';$('progRecSize').textContent=fmtB(videoBlob.size);
+                addLog(`Recording done: ${recElapsed}s, ${fmtB(videoBlob.size)}`,'ok');
+                resolve(videoBlob);
+            };
+            recorder.onerror=()=>{clearInterval(recTimerInterval);reject(new Error('Recorder failed'));};
+            recorder.start(200);
+        }catch(e){clearInterval(recTimerInterval);reject(e);return;}
 
         utter=new SpeechSynthesisUtterance(text);utter.rate=1;utter.pitch=1;utter.lang=getLang();
         const sv=getVoice();if(sv){utter.voice=sv;utter.lang=sv.lang;}
         ttsEnded=false;playing=true;t0=0;
         utter.onend=()=>{ttsEnded=true;if(playing){const w=SLIDE_MS-(performance.now()-t0)%SLIDE_MS+300;setTimeout(()=>{if(playing){playing=false;if(animId)cancelAnimationFrame(animId);if(recorder&&recorder.state==='recording')recorder.stop();}},w);}};
-        utter.onerror=()=>{if(playing){playing=false;if(animId)cancelAnimationFrame(animId);if(recorder&&recorder.state==='recording')recorder.stop();}reject(new Error('TTS failed'));};
+        utter.onerror=()=>{clearInterval(recTimerInterval);if(playing){playing=false;if(animId)cancelAnimationFrame(animId);if(recorder&&recorder.state==='recording')recorder.stop();}reject(new Error('TTS failed'));};
         await sleep(100);speechSynthesis.speak(utter);animId=requestAnimationFrame(animate);
     });
 }
 
-/* --- YouTube upload (promise) --- */
+/* --- YouTube upload (with progress) --- */
 function uploadVid(title){
     return new Promise((resolve,reject)=>{
         if(!accessToken||!videoBlob){reject(new Error('Not signed in'));return;}
+        showPanel('progUpload');
+        const upT0=performance.now();
+        setProg('progUpBar','progUpPct',0);
+        $('progUpSpeed').textContent='—';$('progUpSize').textContent=`0 / ${fmtB(videoBlob.size)}`;
+
         const metadata={snippet:{title:`Short Story - ${title}`.slice(0,100),description:`Generated by StoryToVideo | Genre: ${currentGenre}`,categoryId:'22'},status:{privacyStatus:'private',selfDeclaredMadeForKids:false}};
         const boundary='-------314159265358979323846';
         const reader=new FileReader();
@@ -230,7 +380,25 @@ function uploadVid(title){
             xhr.open('POST','https://www.googleapis.com/upload/youtube/v3/videos?uploadType=multipart&part=snippet,status');
             xhr.setRequestHeader('Authorization','Bearer '+accessToken);
             xhr.setRequestHeader('Content-Type','multipart/related; boundary='+boundary);
-            xhr.onload=()=>{if(xhr.status>=200&&xhr.status<300){let d;try{d=JSON.parse(xhr.responseText);}catch{d={};}resolve(d.id||'ok');}else{let msg=`Upload failed (${xhr.status})`;try{const e=JSON.parse(xhr.responseText);if(xhr.status===401){lockUI();msg='Session expired';}else if(e.error?.message)msg=e.error.message;}catch{}reject(new Error(msg));}};
+            xhr.upload.onprogress=e=>{
+                if(e.lengthComputable){
+                    const p=Math.round(e.loaded/e.total*100);
+                    const el=(performance.now()-upT0)/1000;
+                    const speed=e.loaded/el;
+                    setProg('progUpBar','progUpPct',p);
+                    $('progUpSpeed').textContent=fmtB(speed)+'/s';
+                    $('progUpSize').textContent=`${fmtB(e.loaded)} / ${fmtB(e.total)}`;
+                }
+            };
+            xhr.onload=()=>{
+                const elapsed=((performance.now()-upT0)/1000).toFixed(1);
+                if(xhr.status>=200&&xhr.status<300){
+                    setProg('progUpBar','progUpPct',100);
+                    let d;try{d=JSON.parse(xhr.responseText);}catch{d={};}
+                    addLog(`Upload done in ${elapsed}s`,'ok');
+                    resolve(d.id||'ok');
+                }else{let msg=`Upload failed (${xhr.status})`;try{const e=JSON.parse(xhr.responseText);if(xhr.status===401){lockUI();msg='Session expired';}else if(e.error?.message)msg=e.error.message;}catch{}reject(new Error(msg));}
+            };
             xhr.onerror=()=>reject(new Error('Network error'));xhr.send(body.buffer);
         };
         reader.readAsArrayBuffer(videoBlob);
@@ -238,26 +406,9 @@ function uploadVid(title){
 }
 
 /* --- Auth --- */
-function unlockUI(){
-    $('signinArea').style.display='none';$('controlArea').style.display='block';$('startBtn').disabled=false;
-    $('idleOv').innerHTML='<i class="fas fa-bolt" style="font-size:2rem;color:var(--accent);opacity:.3;margin-bottom:.5rem"></i><p style="color:var(--muted);opacity:.5;font-size:.78rem">Ready</p>';
-    $('noteText').style.display='none';
-}
-function lockUI(){
-    $('signinArea').style.display='block';$('controlArea').style.display='none';
-    $('signinBtn').disabled=false;$('signinBtn').innerHTML='<i class="fab fa-google"></i> Reconnect';
-    $('signinHint').textContent='Session expired — sign in again';
-    $('idleOv').innerHTML='<i class="fas fa-clapperboard" style="font-size:2rem;color:var(--muted);opacity:.2;margin-bottom:.5rem"></i><p style="color:var(--muted);opacity:.4;font-size:.78rem">Sign in again</p>';
-    if(autoRunning){autoRunning=false;playing=false;if(animId)cancelAnimationFrame(animId);if(utter)speechSynthesis.cancel();if(recorder&&recorder.state==='recording')recorder.stop();setBadge('err','Expired');addLog('Session expired','err');toast('Session expired','fa-xmark','var(--red)');}
-}
-function initYT(){
-    try{if(typeof google==='undefined'||!google.accounts||!google.accounts.oauth2){$('signinHint').textContent='Google SDK failed to load';return;}
-    tokenClient=google.accounts.oauth2.initTokenClient({
-        client_id:'699259843998-r037jfmftsnf9m23nm5pofmvrgckhg8k.apps.googleusercontent.com',
-        scope:'https://www.googleapis.com/auth/youtube.upload',
-        callback:r=>{if(r.access_token){accessToken=r.access_token;unlockUI();if(autoRunning&&!playing)autoLoop();}else if(r.error!=='popup_closed')toast('Sign-in failed','fa-xmark','var(--red)');}
-    });$('signinBtn').disabled=false;$('signinHint').textContent='Click to connect your YouTube account';}catch(e){$('signinHint').textContent='Google SDK init error';}
-}
+function unlockUI(){$('signinArea').style.display='none';$('controlArea').style.display='block';$('startBtn').disabled=false;$('idleOv').innerHTML='<i class="fas fa-bolt" style="font-size:2rem;color:var(--accent);opacity:.3;margin-bottom:.5rem"></i><p style="color:var(--muted);opacity:.5;font-size:.78rem">Ready</p>';$('noteText').style.display='none';}
+function lockUI(){$('signinArea').style.display='block';$('controlArea').style.display='none';$('signinBtn').disabled=false;$('signinBtn').innerHTML='<i class="fab fa-google"></i> Reconnect';$('signinHint').textContent='Session expired — sign in again';$('idleOv').innerHTML='<i class="fas fa-clapperboard" style="font-size:2rem;color:var(--muted);opacity:.2;margin-bottom:.5rem"></i><p style="color:var(--muted);opacity:.4;font-size:.78rem">Sign in again</p>';showPanel(null);if(autoRunning){autoRunning=false;playing=false;if(animId)cancelAnimationFrame(animId);if(utter)speechSynthesis.cancel();if(recorder&&recorder.state==='recording')recorder.stop();if(recTimerInterval)clearInterval(recTimerInterval);setBadge('err','Expired');addLog('Session expired','err');toast('Session expired','fa-xmark','var(--red)');}}
+function initYT(){try{if(typeof google==='undefined'||!google.accounts||!google.accounts.oauth2){$('signinHint').textContent='Google SDK failed to load';return;}tokenClient=google.accounts.oauth2.initTokenClient({client_id:'699259843998-r037jfmftsnf9m23nm5pofmvrgckhg8k.apps.googleusercontent.com',scope:'https://www.googleapis.com/auth/youtube.upload',callback:r=>{if(r.access_token){accessToken=r.access_token;unlockUI();if(autoRunning&&!playing)autoLoop();}else if(r.error!=='popup_closed')toast('Sign-in failed','fa-xmark','var(--red)');}});$('signinBtn').disabled=false;$('signinHint').textContent='Click to connect your YouTube account';}catch(e){$('signinHint').textContent='Google SDK init error';}}
  $('signinBtn').addEventListener('click',()=>{if(tokenClient)tokenClient.requestAccessToken();});
 window.addEventListener('load',()=>{setTimeout(initYT,600);});
 
@@ -266,27 +417,50 @@ function pickGenre(){return GENRES[Math.floor(Math.random()*GENRES.length)];}
 
 async function autoLoop(){
     while(autoRunning){
+        const cycleT0=performance.now();
+        const phaseTimes={story:0,images:0,record:0,upload:0};
         currentGenre=pickGenre();$('genreTag').textContent=currentGenre;
         setStep('story','active');setStep('images','');setStep('record','');setStep('upload','');
-        setBadge('run','Generating...');addLog(`Starting: ${currentGenre}`,'info');
+        setBadge('run','Generating...');addLog(`━━━ ${currentGenre} ━━━`,'info');
+
+        /* Story */
         let story='';
-        try{story=await genStory(currentGenre);addLog(`${currentGenre}: Story ready (${story.split(/\s+/).length} words)`,'ok');setStep('story','done');}
-        catch(e){stats.fail++;stats.cfail++;upStats();setStep('story','err');addLog(`${currentGenre}: ${e.message}`,'err');if(stats.cfail>=5){addLog('5 fails, waiting 15s...','warn');await sleep(15000);stats.cfail=0;}else await sleep(3000);if(!autoRunning)break;continue;}
+        const stT0=performance.now();
+        try{story=await genStory(currentGenre);phaseTimes.story=((performance.now()-stT0)/1000);setStep('story','done');}
+        catch(e){stats.fail++;stats.cfail++;upStats();setStep('story','err');addLog(`Story failed: ${e.message}`,'err');showPanel(null);if(stats.cfail>=5){addLog('5 fails, waiting 15s...','warn');await sleep(15000);stats.cfail=0;}else await sleep(3000);if(!autoRunning)break;continue;}
         if(!autoRunning)break;stats.cfail=0;
+
+        /* Images + Record */
         setStep('images','active');setStep('record','active');setBadge('run','Recording...');$('idleOv').style.opacity='0';
-        try{await genVideo(story);stats.gen++;upStats();addLog(`${currentGenre}: Video done (${fmtB(videoBlob.size)})`,'ok');setStep('images','done');setStep('record','done');}
-        catch(e){stats.fail++;stats.cfail++;upStats();setStep('record','err');addLog(`${currentGenre}: ${e.message}`,'err');playing=false;if(animId)cancelAnimationFrame(animId);if(utter)speechSynthesis.cancel();if(recorder&&recorder.state==='recording')recorder.stop();if(stats.cfail>=5){addLog('5 fails, waiting 15s...','warn');await sleep(15000);stats.cfail=0;}else await sleep(3000);if(!autoRunning)break;continue;}
+        const irT0=performance.now();
+        try{await genVideo(story);stats.gen++;upStats();phaseTimes.images=0.5;/* approx */phaseTimes.record=((performance.now()-irT0)/1000)-phaseTimes.images;setStep('images','done');setStep('record','done');}
+        catch(e){stats.fail++;stats.cfail++;upStats();setStep('record','err');addLog(`Video failed: ${e.message}`,'err');playing=false;if(animId)cancelAnimationFrame(animId);if(utter)speechSynthesis.cancel();if(recorder&&recorder.state==='recording')recorder.stop();if(recTimerInterval)clearInterval(recTimerInterval);showPanel(null);if(stats.cfail>=5){addLog('5 fails, waiting 15s...','warn');await sleep(15000);stats.cfail=0;}else await sleep(3000);if(!autoRunning)break;continue;}
         if(!autoRunning)break;
+
+        /* Upload */
         setStep('upload','active');setBadge('run','Uploading...');
-        try{const vid=await uploadVid(currentGenre);stats.up++;upStats();addLog(`Uploaded: youtube.com/watch?v=${vid}`,'ok');setStep('upload','done');toast(`Uploaded: ${currentGenre}`);}
-        catch(e){addLog(`Upload: ${e.message}`,'err');setStep('upload','err');if(e.message.includes('expired')||e.message.includes('401')){lockUI();break;}}
-        setBadge('done','Done');await sleep(1500);
+        const upT0=performance.now();
+        try{const vid=await uploadVid(currentGenre);stats.up++;upStats();phaseTimes.upload=((performance.now()-upT0)/1000);addLog(`Uploaded: youtube.com/watch?v=${vid}`,'ok');setStep('upload','done');toast(`Uploaded: ${currentGenre}`);}
+        catch(e){addLog(`Upload: ${e.message}`,'err');setStep('upload','err');if(e.message.includes('expired')||e.message.includes('401')){lockUI();break;}showPanel(null);phaseTimes.upload=((performance.now()-upT0)/1000);}
+
+        /* Summary */
+        const cycleTotal=((performance.now()-cycleT0)/1000).toFixed(1);
+        showPanel('progSummary');
+        $('sumTime').textContent=cycleTotal+'s';
+        $('sumStory').textContent=phaseTimes.story.toFixed(1)+'s';
+        $('sumImg').textContent=phaseTimes.images.toFixed(1)+'s';
+        $('sumRec').textContent=phaseTimes.record.toFixed(1)+'s';
+        $('sumUp').textContent=phaseTimes.upload.toFixed(1)+'s';
+        $('sumSize').textContent=videoBlob?fmtB(videoBlob.size):'—';
+        setBadge('done','Cycle done');
+
+        await sleep(2000);
     }
 }
 
 /* --- Controls --- */
- $('startBtn').addEventListener('click',()=>{autoRunning=true;stats.cfail=0;$('startBtn').disabled=true;$('stopBtn').disabled=false;$('logEl').innerHTML='';upStats();addLog('Started','ok');toast('Auto loop started','fa-bolt','var(--accent)');autoLoop();});
- $('stopBtn').addEventListener('click',()=>{autoRunning=false;playing=false;if(animId)cancelAnimationFrame(animId);if(utter)speechSynthesis.cancel();if(recorder&&recorder.state==='recording')recorder.stop();$('startBtn').disabled=false;$('stopBtn').disabled=true;setBadge('idle','Stopped');setStep('story','');setStep('images','');setStep('record','');setStep('upload','');$('genreTag').textContent='—';$('idleOv').innerHTML='<i class="fas fa-bolt" style="font-size:2rem;color:var(--accent);opacity:.3;margin-bottom:.5rem"></i><p style="color:var(--muted);opacity:.5;font-size:.78rem">Paused</p>';$('idleOv').style.opacity='1';addLog('Stopped','warn');toast('Stopped','fa-stop','#f59e0b');});
+ $('startBtn').addEventListener('click',()=>{autoRunning=true;stats.cfail=0;$('startBtn').disabled=true;$('stopBtn').disabled=false;$('logEl').innerHTML='';upStats();addLog('Auto loop started','ok');toast('Auto loop started','fa-bolt','var(--accent)');autoLoop();});
+ $('stopBtn').addEventListener('click',()=>{autoRunning=false;playing=false;if(animId)cancelAnimationFrame(animId);if(utter)speechSynthesis.cancel();if(recorder&&recorder.state==='recording')recorder.stop();if(recTimerInterval)clearInterval(recTimerInterval);$('startBtn').disabled=false;$('stopBtn').disabled=true;setBadge('idle','Stopped');setStep('story','');setStep('images','');setStep('record','');setStep('upload','');$('genreTag').textContent='—';$('idleOv').innerHTML='<i class="fas fa-bolt" style="font-size:2rem;color:var(--accent);opacity:.3;margin-bottom:.5rem"></i><p style="color:var(--muted);opacity:.5;font-size:.78rem">Paused</p>';$('idleOv').style.opacity='1';showPanel(null);addLog('Stopped','warn');toast('Stopped','fa-stop','#f59e0b');});
 
 /* Idle canvas */
 ctx.fillStyle='#080706';ctx.fillRect(0,0,CW,CH);

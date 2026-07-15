@@ -42,7 +42,6 @@
             border: 1px solid #2a2520;
             padding: 28px 32px 32px;
             box-shadow: 0 30px 80px rgba(0, 0, 0, .7);
-            transition: all .3s;
         }
         @media (max-width: 600px) {
             .app {
@@ -51,7 +50,6 @@
             }
         }
 
-        /* header */
         .header {
             display: flex;
             align-items: center;
@@ -100,7 +98,6 @@
             }
         }
 
-        /* status row */
         .status-row {
             display: flex;
             align-items: center;
@@ -201,7 +198,6 @@
             }
         }
 
-        /* progress bar */
         .progress-wrap {
             margin: 8px 0 14px;
             display: flex;
@@ -246,7 +242,6 @@
             }
         }
 
-        /* canvas */
         .canvas-wrap {
             position: relative;
             background: #000;
@@ -304,7 +299,6 @@
             bottom: 0;
         }
 
-        /* steps */
         .steps {
             display: flex;
             gap: 4px;
@@ -354,7 +348,6 @@
             }
         }
 
-        /* controls */
         .controls {
             display: flex;
             flex-wrap: wrap;
@@ -467,7 +460,6 @@
             }
         }
 
-        /* settings collapsible */
         .settings {
             margin-top: 14px;
             border-top: 1px solid #2a2520;
@@ -638,7 +630,6 @@
             background: #4a4440;
         }
 
-        /* log */
         .log-wrap {
             margin-top: 12px;
             display: none;
@@ -702,7 +693,6 @@
             display: block;
         }
 
-        /* file info */
         .file-info {
             display: none;
             align-items: center;
@@ -736,7 +726,6 @@
             font-size: 11px;
         }
 
-        /* toast */
         .toast {
             position: fixed;
             bottom: 24px;
@@ -820,7 +809,7 @@
         <div class="header">
             <div class="logo"><i class="fas fa-clapperboard"></i></div>
             <h1>StoryToVideo <span>Auto</span></h1>
-            <div class="sub"><i class="fas fa-circle" style="color:#22c55e;font-size:8px;"></i> v2.1</div>
+            <div class="sub"><i class="fas fa-circle" style="color:#22c55e;font-size:8px;"></i> v2.2</div>
         </div>
 
         <!-- status row -->
@@ -1479,6 +1468,8 @@
                             statusDot.className = 'dot green';
                             toast('YouTube connected!', 'fa-check-circle', '#22c55e');
                             addLog('YouTube connected', 'ok');
+                            // Verify token by calling a simple API
+                            verifyToken(accessToken);
                         } else if (r.error === 'popup_closed') {
                             // ignore
                         } else {
@@ -1494,6 +1485,37 @@
                 statusText.textContent = 'OAuth error: ' + e.message;
                 statusDot.className = 'dot red';
             }
+        }
+
+        // Verify token with a lightweight YouTube API call
+        async function verifyToken(token) {
+            try {
+                const resp = await fetch('https://www.googleapis.com/youtube/v3/channels?part=id&mine=true', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (resp.ok) {
+                    addLog('Token verified, YouTube channel accessible', 'ok');
+                } else if (resp.status === 401) {
+                    addLog('Token invalid or expired — please reconnect', 'err');
+                    resetAuth();
+                } else {
+                    const data = await resp.json().catch(() => ({}));
+                    addLog('Token verification warning: ' + (data.error?.message || resp.status), 'warn');
+                }
+            } catch (e) {
+                addLog('Token verification failed: ' + e.message, 'warn');
+            }
+        }
+
+        function resetAuth() {
+            accessToken = null;
+            connectedBadge.style.display = 'none';
+            ytSignInBtn.innerHTML = '<i class="fab fa-google"></i> Connect YouTube';
+            ytSignInBtn.disabled = false;
+            ytSignInBtn.style.opacity = '1';
+            startBtn.disabled = true;
+            statusText.textContent = 'Reconnect required';
+            statusDot.className = 'dot red';
         }
 
         ytSignInBtn.addEventListener('click', () => {
@@ -1653,7 +1675,10 @@
         // ============================================================
         function uploadVideoAsync(title) {
             return new Promise((resolve, reject) => {
-                if (!accessToken || !videoBlob) { reject(new Error('Not signed in')); return; }
+                if (!accessToken || !videoBlob) {
+                    reject(new Error('Not signed in'));
+                    return;
+                }
                 ytProgress.style.display = 'block';
                 ytProgBar.style.width = '0%';
                 ytProgPct.textContent = '0%';
@@ -1694,11 +1719,9 @@
                     xhr.upload.onprogress = e => {
                         if (e.lengthComputable) {
                             const p = Math.round(e.loaded / e.total * 100);
-                            // Update both bars
                             ytProgBar.style.width = p + '%';
                             ytProgPct.textContent = p + '%';
                             ytProgLbl.textContent = `${fmtBytes(e.loaded)} / ${fmtBytes(e.total)}`;
-                            // Main progress: 80% to 100%
                             const mainPct = 80 + (e.loaded / e.total) * 20;
                             const sub = `Uploading ${fmtBytes(e.loaded)} / ${fmtBytes(e.total)}`;
                             updateProgress(mainPct, Math.round(mainPct) + '%', sub);
@@ -1716,14 +1739,12 @@
                             try {
                                 const e = JSON.parse(xhr.responseText);
                                 if (xhr.status === 401) {
+                                    // Token expired or invalid
                                     accessToken = null;
-                                    connectedBadge.style.display = 'none';
-                                    ytSignInBtn.innerHTML = '<i class="fab fa-google"></i> Connect YouTube';
-                                    ytSignInBtn.disabled = false;
-                                    ytSignInBtn.style.opacity = '1';
-                                    startBtn.disabled = true;
+                                    resetAuth();
                                     msg = 'Session expired — sign in again';
                                     toast('Session expired', 'fa-triangle-exclamation', '#ef4444');
+                                    addLog('YouTube session expired, please reconnect', 'err');
                                 } else if (e.error?.message) msg = e.error.message;
                             } catch {}
                             reject(new Error(msg));
@@ -1821,11 +1842,12 @@
                     setStep('upload', 'error');
                     setBadge('error', 'Upload failed');
                     if (e.message.includes('expired') || e.message.includes('401')) {
-                        connectedBadge.style.display = 'none';
-                        ytSignInBtn.innerHTML = '<i class="fab fa-google"></i> Connect YouTube';
-                        ytSignInBtn.disabled = false;
-                        ytSignInBtn.style.opacity = '1';
-                        startBtn.disabled = true;
+                        resetAuth();
+                        // Stop the loop if auth fails
+                        autoRunning = false;
+                        startBtn.disabled = false;
+                        stopBtn.disabled = true;
+                        addLog('Auto loop stopped due to auth error', 'warn');
                         break;
                     }
                 }
@@ -1833,7 +1855,6 @@
                 setBadge('done', 'Cycle complete');
                 addLog('—', 'info');
                 await sleep(2000);
-                // reset progress for next cycle
                 updateProgress(0, '0%', 'Ready for next');
             }
         }

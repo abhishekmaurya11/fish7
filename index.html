@@ -65,7 +65,6 @@
         .toast-el.vis{transform:translateY(0)}
 
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}.pulse{animation:pulse 1.2s ease-in-out infinite}
-        @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
         @media(max-width:480px){.app{padding:1rem}.steps{flex-wrap:wrap}.step{min-width:calc(50% - .2rem)}}
     </style>
@@ -81,13 +80,11 @@
         </div>
     </div>
 
-    <!-- Sign in (shown first) -->
     <div id="signinArea" style="text-align:center;margin-bottom:.8rem">
         <button id="signinBtn" class="btn btn-signin" disabled><i class="fab fa-google"></i> Sign in with Google</button>
         <p style="font-size:.68rem;color:var(--muted);margin-top:.4rem" id="signinHint">Loading...</p>
     </div>
 
-    <!-- Controls (hidden until signed in) -->
     <div id="controlArea" style="display:none">
         <div class="controls">
             <button id="startBtn" class="btn btn-go" disabled><i class="fas fa-bolt"></i> Start</button>
@@ -109,7 +106,7 @@
         <div id="logEl" class="log"></div>
     </div>
 
-    <p class="note" id="noteText">Serve via <code>python -m http.server 8000</code> then add origin to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud Console</a> credentials.</p>
+    <p class="note" id="noteText">Deploy to <a href="https://fish7.vercel.app/" target="_blank" rel="noopener">fish7.vercel.app</a> or add your origin to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud Console</a>.</p>
 </div>
 
 <div id="toast" class="toast-el"><i id="tIco" class="fas fa-check-circle" style="color:var(--green)"></i><span id="tMsg">OK</span></div>
@@ -127,7 +124,7 @@ let stats={gen:0,up:0,fail:0,cfail:0};
 const $=id=>document.getElementById(id);
 const cv=$('cv'),ctx=cv.getContext('2d');
 
-/* --- Voice helpers (minimal) --- */
+/* --- Voice (auto-pick best) --- */
 function getVoice(){const v=speechSynthesis.getVoices();return v.find(x=>x.lang.startsWith('en')&&x.name.toLowerCase().includes('google'))||v.find(x=>x.lang.startsWith('en'))||v[0]||null;}
 function getLang(){const v=getVoice();return v?v.lang:'en-US';}
 
@@ -147,7 +144,7 @@ function splitText(text){
 /* --- Image loading --- */
 function loadImg(url){return new Promise((res,rej)=>{const img=new Image();img.crossOrigin='anonymous';img.onload=()=>res(img);img.onerror=()=>{const i2=new Image();i2.crossOrigin='anonymous';i2.onload=()=>res(i2);i2.onerror=rej;i2.src=url.replace(/seed\/[^/]+/,`seed/r${Math.random().toString(36).slice(2,8)}`);};img.src=url;});}
 
-/* --- Ken Burns --- */
+/* --- Ken Burns draw --- */
 const KB=[{sS:1,eS:1.16,sX:0,sY:0,eX:-.04,eY:-.04},{sS:1.12,eS:1,sX:-.04,sY:0,eX:0,eY:0},{sS:1,eS:1.14,sX:0,sY:-.03,eX:-.03,eY:.01},{sS:1.1,eS:1,sX:.03,sY:0,eX:-.01,eY:-.03},{sS:1,eS:1.18,sX:-.02,sY:-.02,eX:.01,eY:.01},{sS:1.06,eS:1.14,sX:.02,sY:-.01,eX:-.02,eY:.02}];
 function drawCover(img,sc,ox,oy,a){const ir=img.width/img.height,cr=CW/CH;let dw,dh;if(ir>cr){dh=CH*sc;dw=dh*ir;}else{dw=CW*sc;dh=dw/ir;}ctx.save();ctx.globalAlpha=a;ctx.drawImage(img,(CW-dw)/2+ox*CW,(CH-dh)/2+oy*CH,dw,dh);ctx.restore();}
 
@@ -254,12 +251,12 @@ function lockUI(){
     if(autoRunning){autoRunning=false;playing=false;if(animId)cancelAnimationFrame(animId);if(utter)speechSynthesis.cancel();if(recorder&&recorder.state==='recording')recorder.stop();setBadge('err','Expired');addLog('Session expired','err');toast('Session expired','fa-xmark','var(--red)');}
 }
 function initYT(){
-    try{if(typeof google==='undefined'||!google.accounts||!google.accounts.oauth2)return;
+    try{if(typeof google==='undefined'||!google.accounts||!google.accounts.oauth2){$('signinHint').textContent='Google SDK failed to load';return;}
     tokenClient=google.accounts.oauth2.initTokenClient({
-        client_id:'699259843998-qg5t2emtfubf2gpj7hbfrdgbi3lqocl5.apps.googleusercontent.com',
+        client_id:'699259843998-r037jfmftsnf9m23nm5pofmvrgckhg8k.apps.googleusercontent.com',
         scope:'https://www.googleapis.com/auth/youtube.upload',
         callback:r=>{if(r.access_token){accessToken=r.access_token;unlockUI();if(autoRunning&&!playing)autoLoop();}else if(r.error!=='popup_closed')toast('Sign-in failed','fa-xmark','var(--red)');}
-    });$('signinBtn').disabled=false;$('signinHint').textContent='Click to connect your YouTube account';}catch(e){$('signinHint').textContent='Google SDK failed to load';}
+    });$('signinBtn').disabled=false;$('signinHint').textContent='Click to connect your YouTube account';}catch(e){$('signinHint').textContent='Google SDK init error';}
 }
  $('signinBtn').addEventListener('click',()=>{if(tokenClient)tokenClient.requestAccessToken();});
 window.addEventListener('load',()=>{setTimeout(initYT,600);});
@@ -271,7 +268,7 @@ async function autoLoop(){
     while(autoRunning){
         currentGenre=pickGenre();$('genreTag').textContent=currentGenre;
         setStep('story','active');setStep('images','');setStep('record','');setStep('upload','');
-        setBadge('run',`Generating...`);addLog(`Starting: ${currentGenre}`,'info');
+        setBadge('run','Generating...');addLog(`Starting: ${currentGenre}`,'info');
         let story='';
         try{story=await genStory(currentGenre);addLog(`${currentGenre}: Story ready (${story.split(/\s+/).length} words)`,'ok');setStep('story','done');}
         catch(e){stats.fail++;stats.cfail++;upStats();setStep('story','err');addLog(`${currentGenre}: ${e.message}`,'err');if(stats.cfail>=5){addLog('5 fails, waiting 15s...','warn');await sleep(15000);stats.cfail=0;}else await sleep(3000);if(!autoRunning)break;continue;}

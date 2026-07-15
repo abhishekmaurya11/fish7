@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>StoryToVideo — Auto‑Generate & Upload (Gemini 2.0)</title>
+    <title>StoryToVideo — Auto‑Generate & Upload (Gemini 2.5)</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
+        /* ─── same styling as before ─── */
         :root {
             --bg: #0c0b09;
             --bg2: #1a1816;
@@ -434,6 +435,8 @@
                 grid-template-columns: 1fr !important;
             }
         }
+
+        /* ─── log panel ─── */
         .log-panel {
             background: var(--log-bg);
             border: 1px solid var(--border);
@@ -480,6 +483,7 @@
         .log-msg.info {
             color: var(--accent);
         }
+
         .loop-status {
             background: var(--card);
             border: 1px solid var(--border);
@@ -504,6 +508,7 @@
             border-radius: 12px;
             font-size: .75rem;
         }
+        /* API key row */
         .api-key-row {
             display: flex;
             gap: 0.5rem;
@@ -540,9 +545,10 @@
                 </div>
                 <h1 style="font-size:1.7rem;font-weight:700;letter-spacing:-.5px;">StoryToVideo</h1>
             </div>
-            <p style="color:var(--muted);font-size:.92rem;margin-left:3.1rem;">Auto‑generate with Gemini 2.0, create videos, and upload to YouTube — loop until you stop</p>
+            <p style="color:var(--muted);font-size:.92rem;margin-left:3.1rem;">Auto‑generate with Gemini 2.5 Flash, create videos, and upload to YouTube — loop until you stop</p>
         </header>
 
+        <!-- API Key Input -->
         <div class="api-key-row">
             <label for="apiKeyInput"><i class="fas fa-key"></i> Gemini API Key:</label>
             <input type="text" id="apiKeyInput" class="input-f" value="AIzaSyCwLod_9bABFRaKVabkdBH9dS3d9ovbVCs" placeholder="Paste your API key (starts with AIza...)" />
@@ -551,6 +557,7 @@
             <span class="key-hint">(Get from <a href="https://makersuite.google.com/app/apikey" target="_blank" style="color:var(--accent);">Google AI Studio</a>)</span>
         </div>
 
+        <!-- Voice Settings -->
         <section id="voiceCard" class="voice-card">
             <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;">
                 <i class="fas fa-microphone-lines" style="color:#a855f7;font-size:1.1rem;"></i>
@@ -579,6 +586,7 @@
             </div>
         </section>
 
+        <!-- Story Input -->
         <section class="fi fi1" style="margin-bottom:1.8rem;">
             <label style="display:block;font-weight:600;margin-bottom:.65rem;font-size:.92rem;">
                 <i class="fas fa-pen-nib" style="color:var(--accent);margin-right:.35rem;"></i> Story (auto‑generated)
@@ -592,6 +600,7 @@
             </div>
         </section>
 
+        <!-- Controls -->
         <section class="fi fi2" style="display:flex;flex-wrap:wrap;gap:.65rem;align-items:center;margin-bottom:1.3rem;">
             <button id="genBtn" class="btn-p"><i class="fas fa-play"></i> Start Auto Loop</button>
             <button id="stopBtn" class="btn-s" disabled><i class="fas fa-stop"></i> Stop</button>
@@ -600,6 +609,7 @@
             <div id="badge" class="badge b-idle"><i class="fas fa-circle" style="font-size:.35rem;"></i> Ready</div>
         </section>
 
+        <!-- Loop status -->
         <div id="loopStatus" class="loop-status" style="display:none;">
             <span><i class="fas fa-rotate-right spin" style="color:var(--accent);"></i> Loop active</span>
             <span>Iteration: <span id="iterCount" class="highlight">0</span></span>
@@ -607,6 +617,7 @@
             <span>Step: <span id="currentStep" class="highlight">idle</span></span>
         </div>
 
+        <!-- Progress -->
         <div id="progSec" style="margin-bottom:1.3rem;display:none;">
             <div style="display:flex;justify-content:space-between;margin-bottom:.35rem;">
                 <span id="progLbl" style="font-size:.78rem;color:var(--muted);">Loading...</span>
@@ -615,6 +626,7 @@
             <div class="prog-track"><div id="progBar" class="prog-fill"></div></div>
         </div>
 
+        <!-- Canvas -->
         <section class="fi fi3" style="margin-bottom:1rem;">
             <div class="canvas-box" id="cbox">
                 <div class="bar-top"></div>
@@ -633,6 +645,7 @@
             </div>
         </section>
 
+        <!-- File Info -->
         <div id="fileInfo" class="file-info">
             <div style="width:42px;height:42px;border-radius:10px;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                 <i class="fab fa-youtube" style="color:#ef4444;font-size:1.2rem;"></i>
@@ -644,6 +657,7 @@
             <button id="dlBtn2" class="btn-dl" style="padding:.6rem 1.2rem;font-size:.85rem;flex-shrink:0;"><i class="fas fa-download"></i> Download</button>
         </div>
 
+        <!-- YouTube Upload Section -->
         <section id="ytSection" class="yt-section">
             <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:1rem;">
                 <i class="fab fa-youtube" style="color:#ff0000;font-size:1.3rem;"></i>
@@ -684,19 +698,21 @@
             </div>
         </section>
 
+        <!-- Log Panel -->
         <div class="log-panel" id="logPanel">
             <div class="log-entry"><span class="log-time">⏱️</span><span class="log-msg info">Ready — key is pre‑filled, click "Start Auto Loop"</span></div>
         </div>
 
+        <!-- Info -->
         <section class="fi fi4" style="padding:1.15rem;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-top:1rem;">
             <div style="display:flex;gap:.7rem;align-items:flex-start;">
                 <i class="fas fa-circle-check" style="color:#22c55e;margin-top:.15rem;font-size:1rem;"></i>
                 <div>
-                    <p style="font-weight:600;margin-bottom:.25rem;font-size:.88rem;">🤖 Gemini 2.0 Flash (latest)</p>
+                    <p style="font-weight:600;margin-bottom:.25rem;font-size:.88rem;">🤖 Gemini 2.5 Flash with SDK & Retry</p>
                     <p style="color:var(--muted);font-size:.82rem;line-height:1.65;">
-                        Uses <code style="background:var(--bg2);padding:0 .3rem;border-radius:4px;">gemini-2.0-flash-exp</code> (fastest).<br>
-                        Falls back to <code style="background:var(--bg2);padding:0 .3rem;border-radius:4px;">gemini-1.5-flash</code> and <code style="background:var(--bg2);padding:0 .3rem;border-radius:4px;">gemini-1.5-pro</code>.<br>
-                        Your API key is pre‑filled. Errors are logged and skipped – the loop continues until you press <strong>Stop</strong>.
+                        Uses <code style="background:var(--bg2);padding:0 .3rem;border-radius:4px;">@google/genai</code> SDK with retry logic (503 handling).<br>
+                        Your API key is pre‑filled. The loop generates stories, creates videos with audio, and uploads to YouTube (if signed in).<br>
+                        Errors are logged and skipped – the loop continues until you press <strong>Stop</strong>.
                     </p>
                 </div>
             </div>
@@ -708,15 +724,27 @@
         <span id="tMsg">OK</span>
     </div>
 
-    <script>
-        // ─── YOUR GEMINI API KEY ─────────────────────────────────────
+    <script type="importmap">
+        {
+            "imports": {
+                "@google/genai": "https://esm.run/@google/genai"
+            }
+        }
+    </script>
+    <script type="module">
+        // ──────────────────────────────────────────────────────────────
+        //  IMPORT the GoogleGenAI SDK
+        // ──────────────────────────────────────────────────────────────
+        import { GoogleGenAI } from '@google/genai';
+
+        // ─── YOUR CONFIG ──────────────────────────────────────────────
         const DEFAULT_API_KEY = 'AIzaSyCwLod_9bABFRaKVabkdBH9dS3d9ovbVCs';
         let GEMINI_API_KEY = DEFAULT_API_KEY;
 
-        // ─── YouTube OAuth (replace with your own) ──────────────────
-        const YT_CLIENT_ID = '699259843998-qg5t2emtfubf2gpj7hbfrdgbi3lqocl5.apps.googleusercontent.com';
+        // For YouTube OAuth, replace with your own client ID
+        const YT_CLIENT_ID = '699259843998-qg5t2emtfubf2gpj7hbfrdgbi3lqocl5.apps.googleusercontent.com'; // <-- REPLACE ME
 
-        // ─── All genres ──────────────────────────────────────────────
+        // ─── GENRES ──────────────────────────────────────────────────
         const GENRES = [
             "Action", "Adventure", "Comedy", "Crime", "Drama", "Fantasy",
             "Science Fiction (Sci-Fi)", "Horror", "Mystery", "Thriller", "Suspense",
@@ -743,7 +771,7 @@
             "Experimental Fiction", "Flash Fiction", "Short Story", "Anthology"
         ];
 
-        // ─── Core variables ──────────────────────────────────────────
+        // ─── CORE VARIABLES ──────────────────────────────────────────
         const SLIDE_MS = 2000,
             TRANS_MS = 450,
             CW = 1280,
@@ -765,7 +793,9 @@
             tokenClient = null;
         let stopRequested = false;
         let loopRunning = false;
+        let genai = null; // will be initialized when API key is set
 
+        // ─── DOM REFS ──────────────────────────────────────────────────
         const $ = id => document.getElementById(id);
         const cv = $('cv'),
             ctx = cv.getContext('2d');
@@ -801,23 +831,41 @@
         const setApiKeyBtn = $('setApiKeyBtn');
         const apiKeyStatus = $('apiKeyStatus');
 
-        // ─── API Key ──────────────────────────────────────────────────
+        // ─── API KEY MANAGEMENT ───────────────────────────────────────
+        function initGenAI() {
+            if (GEMINI_API_KEY) {
+                try {
+                    genai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+                    apiKeyStatus.textContent = '✅ SDK ready';
+                    apiKeyStatus.style.color = '#22c55e';
+                    addLog('GoogleGenAI SDK initialized', 'success');
+                } catch (e) {
+                    genai = null;
+                    apiKeyStatus.textContent = '❌ SDK init failed';
+                    apiKeyStatus.style.color = '#ef4444';
+                    addLog('SDK init error: ' + e.message, 'error');
+                }
+            }
+        }
+
         function setApiKey() {
             const key = apiKeyInput.value.trim();
             if (key) {
                 GEMINI_API_KEY = key;
-                apiKeyStatus.textContent = '✅ Key set';
-                apiKeyStatus.style.color = '#22c55e';
-                addLog('Gemini API key updated', 'success');
+                initGenAI();
+                apiKeyStatus.textContent = genai ? '✅ Key set' : '❌ Invalid key';
+                apiKeyStatus.style.color = genai ? '#22c55e' : '#ef4444';
+                addLog(genai ? 'API key updated' : 'Failed to set API key', genai ? 'success' : 'error');
             } else {
                 apiKeyStatus.textContent = '❌ Please enter a key';
                 apiKeyStatus.style.color = '#ef4444';
             }
         }
+
         setApiKeyBtn.addEventListener('click', setApiKey);
         apiKeyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') setApiKey(); });
 
-        // ─── Logging ──────────────────────────────────────────────────
+        // ─── LOGGING ──────────────────────────────────────────────────
         function addLog(msg, type = 'info') {
             const entry = document.createElement('div');
             entry.className = 'log-entry';
@@ -834,7 +882,7 @@
             logPanel.scrollTop = logPanel.scrollHeight;
         }
 
-        // ─── Voice ────────────────────────────────────────────────────
+        // ─── VOICE SYSTEM ─────────────────────────────────────────────
         function getLangPrefix() { return langSel.value; }
 
         function getLangCode() { return langSel.value === 'hi' ? 'hi-IN' : 'en-US'; }
@@ -860,7 +908,8 @@
             if (best >= 0 && langVoices[best]) voiceSel.value = allVoices.indexOf(langVoices[best]);
             else if (langVoices.length) voiceSel.value = allVoices.indexOf(langVoices[0]);
             const langName = prefix === 'hi' ? 'Hindi' : 'English';
-            voiceHint.textContent = langVoices.length ? `${langVoices.length} ${langName} voices found` :
+            voiceHint.textContent = langVoices.length ?
+                `${langVoices.length} ${langName} voices found` :
                 `No ${langName} voices — using best available`;
             if (!langVoices.length) voiceHint.style.color = '#f59e0b';
             else voiceHint.style.color = 'var(--muted)';
@@ -875,6 +924,7 @@
         function getVoice() { const v = speechSynthesis.getVoices(); return v[parseInt(voiceSel.value)] || v[0] || null; }
 
         function updatePreviewBtn() { previewVoiceBtn.disabled = !inp.value.trim() || inp.value.trim().split(/\s+/).length < 3; }
+
         previewVoiceBtn.addEventListener('click', () => {
             speechSynthesis.cancel();
             const t = inp.value.trim().slice(0, 80) + (inp.value.trim().length > 80 ? '...' : '');
@@ -888,6 +938,7 @@
             speechSynthesis.speak(u);
         });
 
+        // ─── INPUT ────────────────────────────────────────────────────
         inp.addEventListener('input', () => {
             const n = inp.value.trim().split(/\s+/).filter(Boolean).length;
             $('wc').textContent = `${n} word${n !== 1 ? 's' : ''}`;
@@ -900,7 +951,7 @@
             voiceCard.classList.add('active');
         });
 
-        // ─── Text Splitting ──────────────────────────────────────────
+        // ─── TEXT SPLITTING ───────────────────────────────────────────
         function splitText(text) {
             const out = [],
                 sents = text.match(/[^.!?।]+[.!?।]+/g) || [text];
@@ -922,7 +973,7 @@
             return out.filter(s => s.trim().length > 0);
         }
 
-        // ─── Image Loading ───────────────────────────────────────────
+        // ─── IMAGE LOADING ────────────────────────────────────────────
         function loadImg(url) {
             return new Promise((res, rej) => {
                 const img = new Image();
@@ -939,7 +990,7 @@
             });
         }
 
-        // ─── Ken Burns ──────────────────────────────────────────────
+        // ─── KEN BURNS ────────────────────────────────────────────────
         const KB = [
             { sS: 1, eS: 1.16, sX: 0, sY: 0, eX: -.04, eY: -.04 },
             { sS: 1.12, eS: 1, sX: -.04, sY: 0, eX: 0, eY: 0 },
@@ -1071,7 +1122,7 @@
             animId = requestAnimationFrame(animate);
         }
 
-        // ─── Helpers ──────────────────────────────────────────────────
+        // ─── HELPERS ──────────────────────────────────────────────────
         function fmtBytes(b) {
             if (b < 1024) return b + ' B';
             if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
@@ -1106,7 +1157,7 @@
             toastTimer = setTimeout(() => el.classList.remove('vis'), 3500);
         }
 
-        // ─── Audio + Video Recording ─────────────────────────────────
+        // ─── AUDIO + VIDEO RECORDING ──────────────────────────────────
         async function setupAudioStream() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
@@ -1294,57 +1345,49 @@
             }
         }
 
-        // ─── Gemini API (UPDATED – correct models) ──────────────────
-        async function generateStoryFromGemini(genre) {
-            if (!GEMINI_API_KEY) {
-                throw new Error('Gemini API key not set.');
-            }
-            const prompt = `Write a 400-word story in the "${genre}" genre.`;
+        // ─── GEMINI API with RETRY (using SDK) ────────────────────────
+        function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-            // Latest models (order: most capable first)
-            const modelConfigs = [
-                { model: 'gemini-2.0-flash-exp', version: 'v1' },
-                { model: 'gemini-1.5-flash', version: 'v1' },
-                { model: 'gemini-1.5-pro', version: 'v1' },
-                { model: 'gemini-1.5-flash', version: 'v1beta' },
-                { model: 'gemini-1.5-pro', version: 'v1beta' },
-            ];
+        async function generateWithRetry(prompt, retries = 3, delay = 1500) {
+            if (!genai) throw new Error('Gemini SDK not initialized. Please set your API key.');
+            const modelName = 'gemini-2.5-flash'; // You can change this to any model your key supports
 
-            let lastError = null;
-            for (const cfg of modelConfigs) {
+            for (let attempt = 1; attempt <= retries; attempt++) {
                 try {
-                    const url =
-                        `https://generativelanguage.googleapis.com/${cfg.version}/models/${cfg.model}:generateContent?key=${GEMINI_API_KEY}`;
-                    const payload = { contents: [{ parts: [{ text: prompt }] }] };
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
+                    const response = await genai.models.generateContent({
+                        model: modelName,
+                        contents: prompt,
                     });
-                    if (!response.ok) {
-                        const errText = await response.text();
-                        if (response.status === 401) {
-                            throw new Error(`Invalid API key.`);
-                        }
-                        throw new Error(`API error (${response.status}): ${errText}`);
+                    return response.text;
+                } catch (error) {
+                    const isBusy = error.message && (error.message.includes('503') || error.message.includes('UNAVAILABLE'));
+                    if (isBusy && attempt < retries) {
+                        const waitTime = delay * Math.pow(2, attempt - 1);
+                        addLog(`Server busy (503). Retrying in ${(waitTime/1000).toFixed(1)}s... (Attempt ${attempt}/${retries})`, 'warning');
+                        await wait(waitTime);
+                        continue;
                     }
-                    const data = await response.json();
-                    const story = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (!story) throw new Error('No story in response');
-                    return story.trim();
-                } catch (e) {
-                    lastError = e;
-                    console.warn(`Model ${cfg.model} (${cfg.version}) failed:`, e.message);
+                    throw error;
                 }
             }
-            throw new Error(`All Gemini models failed. Last error: ${lastError?.message || 'Unknown'}`);
         }
 
-        // ─── Auto‑loop ──────────────────────────────────────────────
+        async function generateStoryFromGemini(genre) {
+            const prompt = `Write a 400-word story in the "${genre}" genre.`;
+            try {
+                const story = await generateWithRetry(prompt);
+                return story.trim();
+            } catch (e) {
+                throw new Error(`Gemini error: ${e.message}`);
+            }
+        }
+
+        // ─── AUTO LOOP ────────────────────────────────────────────────
         async function runAutoLoop() {
             if (loopRunning) return;
-            if (!GEMINI_API_KEY) {
+            if (!genai) {
                 toast('Please set your Gemini API key first!', 'fa-triangle-exclamation', '#ef4444');
+                addLog('ERROR: Gemini SDK not initialized', 'error');
                 return;
             }
             loopRunning = true;
@@ -1353,7 +1396,7 @@
             stopBtn.disabled = false;
             loopStatus.style.display = 'flex';
             let iteration = 0;
-            addLog('🚀 Auto‑loop started (Gemini 2.0 Flash)', 'info');
+            addLog('🚀 Auto‑loop started (Gemini 2.5 Flash with retry)', 'info');
 
             while (!stopRequested) {
                 iteration++;
@@ -1443,7 +1486,7 @@
             toast(`🎬 Uploaded! youtube.com/watch?v=${data.id || 'unknown'}`, 'fa-check-circle', '#22c55e');
         }
 
-        // ─── YouTube OAuth ──────────────────────────────────────────
+        // ─── YOUTUBE OAUTH ────────────────────────────────────────────
         function initYouTube() {
             try {
                 if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) return;
@@ -1482,7 +1525,7 @@
                 updateYtUI(false); }
         });
 
-        // ─── Event Bindings ──────────────────────────────────────────
+        // ─── EVENT BINDINGS ───────────────────────────────────────────
         genBtn.addEventListener('click', () => { if (!loopRunning) runAutoLoop(); });
         stopBtn.addEventListener('click', () => { stopRequested = true;
             stopCurrentRecording(); });
@@ -1504,12 +1547,15 @@
         doneOv.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault();
                 doneOv.click(); } });
 
+        // ─── INIT ──────────────────────────────────────────────────────
         window.addEventListener('load', () => {
+            // Auto-set the pre-filled key
             if (apiKeyInput.value.trim() === DEFAULT_API_KEY) {
                 GEMINI_API_KEY = DEFAULT_API_KEY;
-                apiKeyStatus.textContent = '✅ Key set';
-                apiKeyStatus.style.color = '#22c55e';
-                addLog('Gemini API key auto-set', 'success');
+                initGenAI();
+                apiKeyStatus.textContent = genai ? '✅ Key set' : '❌ Invalid key';
+                apiKeyStatus.style.color = genai ? '#22c55e' : '#ef4444';
+                if (genai) addLog('Gemini API key auto-set from pre-filled value', 'success');
             }
             setTimeout(initYouTube, 500);
         });

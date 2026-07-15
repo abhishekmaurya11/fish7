@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        /* ─── same styling ─── */
+        /* ─── base styling ─── */
         :root {
             --bg: #0c0b09;
             --bg2: #1a1816;
@@ -19,6 +19,7 @@
             --accent2: #f0a050;
             --card: #151311;
             --border: #2a2622;
+            --log-bg: #0f0e0c;
         }
         * {
             margin: 0;
@@ -43,7 +44,7 @@
         .wrap {
             position: relative;
             z-index: 1;
-            max-width: 960px;
+            max-width: 1020px;
             margin: 0 auto;
             padding: 2rem 1.5rem;
         }
@@ -146,31 +147,6 @@
         .btn-s:disabled {
             opacity: .35;
             cursor: not-allowed;
-        }
-        .btn-v {
-            background: linear-gradient(135deg, #22c55e, #16a34a);
-            color: #fff;
-            font-weight: 600;
-            padding: .7rem 1.3rem;
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: .88rem;
-            transition: all .3s;
-            display: inline-flex;
-            align-items: center;
-            gap: .45rem;
-        }
-        .btn-v:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 24px rgba(34, 197, 94, .3);
-        }
-        .btn-v:disabled {
-            opacity: .35;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
         }
         .btn-dl {
             background: linear-gradient(135deg, #ef4444, #dc2626);
@@ -459,7 +435,55 @@
                 grid-template-columns: 1fr !important;
             }
         }
-        /* new status bar for auto loop */
+
+        /* ─── log panel ─── */
+        .log-panel {
+            background: var(--log-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            margin-top: 1rem;
+            max-height: 180px;
+            overflow-y: auto;
+            font-family: 'Space Grotesk', monospace;
+            font-size: 0.8rem;
+            line-height: 1.6;
+            color: var(--muted);
+        }
+        .log-panel::-webkit-scrollbar {
+            width: 4px;
+        }
+        .log-panel::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+        .log-panel::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+        .log-entry {
+            display: flex;
+            gap: 0.6rem;
+            padding: 0.1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+        }
+        .log-time {
+            color: var(--muted);
+            white-space: nowrap;
+        }
+        .log-msg {
+            color: var(--fg);
+            word-break: break-word;
+        }
+        .log-msg.error {
+            color: #ef4444;
+        }
+        .log-msg.success {
+            color: #22c55e;
+        }
+        .log-msg.info {
+            color: var(--accent);
+        }
+
         .loop-status {
             background: var(--card);
             border: 1px solid var(--border);
@@ -527,7 +551,7 @@
             </div>
         </section>
 
-        <!-- Story Input (will be auto‑filled) -->
+        <!-- Story Input (auto‑filled) -->
         <section class="fi fi1" style="margin-bottom:1.8rem;">
             <label style="display:block;font-weight:600;margin-bottom:.65rem;font-size:.92rem;">
                 <i class="fas fa-pen-nib" style="color:var(--accent);margin-right:.35rem;"></i> Story (auto‑generated)
@@ -586,7 +610,7 @@
             </div>
         </section>
 
-        <!-- File Info (download) -->
+        <!-- File Info -->
         <div id="fileInfo" class="file-info">
             <div style="width:42px;height:42px;border-radius:10px;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                 <i class="fab fa-youtube" style="color:#ef4444;font-size:1.2rem;"></i>
@@ -638,6 +662,11 @@
                 <button id="ytUploadBtn" class="btn-yt" disabled><i class="fab fa-youtube"></i> Upload to YouTube</button>
             </div>
         </section>
+
+        <!-- Log Panel -->
+        <div class="log-panel" id="logPanel">
+            <div class="log-entry"><span class="log-time">⏱️</span><span class="log-msg info">Ready — click "Start Auto Loop" to begin</span></div>
+        </div>
 
         <!-- Info -->
         <section class="fi fi4" style="padding:1.15rem;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-top:1rem;">
@@ -750,8 +779,24 @@
             iterCount = $('iterCount'),
             currentGenre = $('currentGenre'),
             currentStep = $('currentStep');
+        const logPanel = $('logPanel');
 
-        const SAMPLE = `The sun rose over the misty mountains...`; // truncated for brevity
+        // ─── Logging ──────────────────────────────────────────────────
+        function addLog(msg, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const time = new Date().toLocaleTimeString();
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'log-time';
+            timeSpan.textContent = time;
+            const msgSpan = document.createElement('span');
+            msgSpan.className = `log-msg ${type}`;
+            msgSpan.textContent = msg;
+            entry.appendChild(timeSpan);
+            entry.appendChild(msgSpan);
+            logPanel.appendChild(entry);
+            logPanel.scrollTop = logPanel.scrollHeight;
+        }
 
         // ─── Voice System ────────────────────────────────────────────
         function getLangPrefix() { return langSel.value; }
@@ -815,17 +860,18 @@
             speechSynthesis.speak(u);
         });
 
-        // ─── Input (manual) ──────────────────────────────────────────
+        // ─── Input ──────────────────────────────────────────────────
         inp.addEventListener('input', () => {
             const n = inp.value.trim().split(/\s+/).filter(Boolean).length;
             $('wc').textContent = `${n} word${n !== 1 ? 's' : ''}`;
-            genBtn.disabled = n < 5; // but we'll override for auto loop
             if (n >= 5) voiceCard.classList.add('active');
             updatePreviewBtn();
         });
-        $('sampleBtn').addEventListener('click', () => { inp.value = SAMPLE;
+        $('sampleBtn').addEventListener('click', () => {
+            inp.value = `The sun rose over the misty mountains...`; // placeholder
             inp.dispatchEvent(new Event('input'));
-            voiceCard.classList.add('active'); });
+            voiceCard.classList.add('active');
+        });
 
         // ─── Text Splitting ─────────────────────────────────────────
         function splitText(text) {
@@ -1043,7 +1089,7 @@
             toastTimer = setTimeout(() => el.classList.remove('vis'), 3500);
         }
 
-        // ─── Recording with Audio (core) ────────────────────────────
+        // ─── Recording with Audio ────────────────────────────────────
         async function setupAudioStream() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
@@ -1349,6 +1395,7 @@
             stopBtn.disabled = false;
             loopStatus.style.display = 'flex';
             let iteration = 0;
+            addLog('🚀 Auto‑loop started', 'info');
 
             while (!stopRequested) {
                 iteration++;
@@ -1364,38 +1411,46 @@
                     currentGenre.textContent = genre;
                     currentStep.textContent = 'Generating story...';
                     setBadge('load', `Generating ${genre} story...`);
+                    addLog(`Iteration ${iteration}: Generating "${genre}" story...`, 'info');
 
                     // 2. Get story from Gemini
                     story = await generateStoryFromGemini(genre);
                     inp.value = story;
                     inp.dispatchEvent(new Event('input'));
                     currentStep.textContent = 'Story ready';
+                    addLog(`Iteration ${iteration}: Story generated (${story.split(/\s+/).length} words)`, 'success');
 
                     // 3. Create video
                     currentStep.textContent = 'Creating video...';
                     setBadge('load', 'Creating video...');
+                    addLog(`Iteration ${iteration}: Creating video...`, 'info');
                     const blob = await createVideoFromText(story);
                     if (!blob) throw new Error('Video blob is null');
                     videoBlob = blob;
                     videoOk = true;
                     currentStep.textContent = 'Video ready';
+                    addLog(`Iteration ${iteration}: Video created (${fmtBytes(blob.size)})`, 'success');
 
                     // 4. Upload to YouTube (if signed in)
                     if (accessToken) {
                         currentStep.textContent = 'Uploading to YouTube...';
                         setBadge('yt', 'Uploading...');
+                        addLog(`Iteration ${iteration}: Uploading to YouTube...`, 'info');
                         await uploadToYouTubeInternal();
                         uploadOk = true;
                         currentStep.textContent = 'Uploaded';
+                        addLog(`Iteration ${iteration}: Upload successful`, 'success');
                         toast(`✅ Uploaded iteration ${iteration}`, 'fa-check-circle', '#22c55e');
                     } else {
                         currentStep.textContent = 'Skipping upload (not signed in)';
+                        addLog(`Iteration ${iteration}: Skipping upload (not signed in)`, 'info');
                         toast('Not signed in to YouTube – video ready for download', 'fa-info-circle', '#f59e0b');
                     }
 
                 } catch (err) {
                     console.error(`Iteration ${iteration} error:`, err);
                     currentStep.textContent = `Error: ${err.message || 'unknown'}`;
+                    addLog(`Iteration ${iteration} ERROR: ${err.message || 'unknown'}`, 'error');
                     toast(`Error in iteration ${iteration}: ${err.message || 'unknown'}`, 'fa-triangle-exclamation', '#ef4444');
                     // continue to next iteration
                 }
@@ -1412,6 +1467,7 @@
             stopBtn.disabled = true;
             loopStatus.style.display = 'none';
             setBadge('idle', 'Loop stopped');
+            addLog('⏹️ Auto‑loop stopped by user', 'info');
             toast('Auto‑loop stopped', 'fa-stop-circle', '#f59e0b');
         }
 
@@ -1464,12 +1520,15 @@
                     callback: (response) => {
                         if (response.access_token) { accessToken = response.access_token;
                             updateYtUI(true);
+                            addLog('YouTube connected', 'success');
                             toast('YouTube connected!', 'fa-check-circle', '#22c55e'); } else if (response.error !==
                             'popup_closed') { toast('Sign-in failed: ' + (response.error || 'unknown'),
-                                'fa-triangle-exclamation', '#ef4444'); }
+                                'fa-triangle-exclamation', '#ef4444');
+                            addLog('YouTube sign-in failed: ' + response.error, 'error'); }
                     }
                 });
-            } catch (e) { console.warn('GSI init failed:', e); }
+            } catch (e) { console.warn('GSI init failed:', e);
+                addLog('Google Sign-In not available', 'error'); }
         }
 
         function updateYtUI(signedIn) {
@@ -1487,6 +1546,7 @@
             if (accessToken && google && google.accounts && google.accounts.oauth2) {
                 google.accounts.oauth2.revoke(accessToken, () => { accessToken = null;
                     updateYtUI(false);
+                    addLog('YouTube signed out', 'info');
                     toast('Signed out', 'fa-info-circle', '#f59e0b'); });
             } else { accessToken = null;
                 updateYtUI(false); }
@@ -1497,7 +1557,6 @@
         // Start auto loop
         genBtn.addEventListener('click', () => {
             if (loopRunning) return;
-            // Check if signed in? We'll let it run, but upload will be skipped if not.
             runAutoLoop();
         });
 
@@ -1540,6 +1599,8 @@
         ig.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = ig;
         ctx.fillRect(0, 0, CW, CH);
+
+        addLog('✅ Ready — click "Start Auto Loop" to begin', 'success');
     </script>
 </body>
 </html>

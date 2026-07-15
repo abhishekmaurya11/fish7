@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>StoryToVideo — Narrated Slideshow (Upload to YouTube)</title>
+    <title>StoryToVideo — Auto‑Generate & Upload</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <script src="https://cdn.tailwindcss.com"></script>
@@ -459,6 +459,31 @@
                 grid-template-columns: 1fr !important;
             }
         }
+        /* new status bar for auto loop */
+        .loop-status {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: .7rem 1rem;
+            margin-top: .5rem;
+            font-size: .85rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .6rem 1.2rem;
+            color: var(--muted);
+        }
+        .loop-status .highlight {
+            color: var(--fg);
+            font-weight: 500;
+        }
+        .loop-status .genre-tag {
+            background: rgba(232, 145, 58, .15);
+            color: var(--accent);
+            padding: .2rem .7rem;
+            border-radius: 12px;
+            font-size: .75rem;
+        }
     </style>
 </head>
 <body>
@@ -470,10 +495,10 @@
                 </div>
                 <h1 style="font-size:1.7rem;font-weight:700;letter-spacing:-.5px;">StoryToVideo</h1>
             </div>
-            <p style="color:var(--muted);font-size:.92rem;margin-left:3.1rem;">Narrated slideshows — <strong style="color:#22c55e;">with working audio</strong> — download or upload to YouTube</p>
+            <p style="color:var(--muted);font-size:.92rem;margin-left:3.1rem;">Auto‑generate stories with Gemini, create videos, and upload to YouTube — loop until you stop</p>
         </header>
 
-        <!-- Voice Settings -->
+        <!-- Voice Settings (kept for manual use) -->
         <section id="voiceCard" class="voice-card">
             <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;">
                 <i class="fas fa-microphone-lines" style="color:#a855f7;font-size:1.1rem;"></i>
@@ -502,12 +527,12 @@
             </div>
         </section>
 
-        <!-- Story Input -->
+        <!-- Story Input (will be auto‑filled) -->
         <section class="fi fi1" style="margin-bottom:1.8rem;">
             <label style="display:block;font-weight:600;margin-bottom:.65rem;font-size:.92rem;">
-                <i class="fas fa-pen-nib" style="color:var(--accent);margin-right:.35rem;"></i> Your Story
+                <i class="fas fa-pen-nib" style="color:var(--accent);margin-right:.35rem;"></i> Story (auto‑generated)
             </label>
-            <textarea id="inp" class="story-ta" placeholder="Paste your story here. Each sentence becomes a scene with a unique image and voice narration..." aria-label="Story text"></textarea>
+            <textarea id="inp" class="story-ta" placeholder="Stories will appear here automatically..." aria-label="Story text"></textarea>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.6rem;">
                 <span id="wc" style="color:var(--muted);font-size:.78rem;">0 words</span>
                 <button id="sampleBtn" class="btn-s" style="padding:.35rem .75rem;font-size:.78rem;">
@@ -518,12 +543,20 @@
 
         <!-- Controls -->
         <section class="fi fi2" style="display:flex;flex-wrap:wrap;gap:.65rem;align-items:center;margin-bottom:1.3rem;">
-            <button id="genBtn" class="btn-p" disabled><i class="fas fa-play"></i> Generate Video</button>
+            <button id="genBtn" class="btn-p" disabled><i class="fas fa-play"></i> Start Auto Loop</button>
             <button id="stopBtn" class="btn-s" disabled><i class="fas fa-stop"></i> Stop</button>
-            <button id="dlBtn" class="btn-dl" disabled><i class="fab fa-youtube"></i> Download for YouTube</button>
+            <button id="dlBtn" class="btn-dl" disabled><i class="fab fa-youtube"></i> Download</button>
             <div style="flex:1;"></div>
             <div id="badge" class="badge b-idle"><i class="fas fa-circle" style="font-size:.35rem;"></i> Ready</div>
         </section>
+
+        <!-- Loop status -->
+        <div id="loopStatus" class="loop-status" style="display:none;">
+            <span><i class="fas fa-rotate-right spin" style="color:var(--accent);"></i> Loop active</span>
+            <span>Iteration: <span id="iterCount" class="highlight">0</span></span>
+            <span>Genre: <span id="currentGenre" class="genre-tag">—</span></span>
+            <span>Step: <span id="currentStep" class="highlight">idle</span></span>
+        </div>
 
         <!-- Progress -->
         <div id="progSec" style="margin-bottom:1.3rem;display:none;">
@@ -553,7 +586,7 @@
             </div>
         </section>
 
-        <!-- File Info -->
+        <!-- File Info (download) -->
         <div id="fileInfo" class="file-info">
             <div style="width:42px;height:42px;border-radius:10px;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                 <i class="fab fa-youtube" style="color:#ef4444;font-size:1.2rem;"></i>
@@ -569,18 +602,14 @@
         <section id="ytSection" class="yt-section">
             <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:1rem;">
                 <i class="fab fa-youtube" style="color:#ff0000;font-size:1.3rem;"></i>
-                <span style="font-weight:700;font-size:1rem;">Upload to YouTube</span>
+                <span style="font-weight:700;font-size:1rem;">YouTube Upload</span>
             </div>
-
-            <!-- Not signed in -->
             <div id="ytSignIn">
                 <button id="ytSignInBtn" class="btn-s"><i class="fab fa-google"></i> Connect YouTube Account</button>
                 <p style="font-size:.75rem;color:var(--muted);margin-top:.5rem;">
-                    Sign in with Google to upload directly. Requires a valid OAuth 2.0 Client ID.
+                    Required for auto‑upload. Replace the placeholder client ID with your own.
                 </p>
             </div>
-
-            <!-- Signed in -->
             <div id="ytUpload" style="display:none;">
                 <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;">
                     <div style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;">
@@ -615,10 +644,11 @@
             <div style="display:flex;gap:.7rem;align-items:flex-start;">
                 <i class="fas fa-circle-check" style="color:#22c55e;margin-top:.15rem;font-size:1rem;"></i>
                 <div>
-                    <p style="font-weight:600;margin-bottom:.25rem;font-size:.88rem;">✅ Audio is captured + Upload to YouTube</p>
+                    <p style="font-weight:600;margin-bottom:.25rem;font-size:.88rem;">🤖 Auto‑loop with Gemini</p>
                     <p style="color:var(--muted);font-size:.82rem;line-height:1.65;">
-                        The video file includes both video and narration audio. Download it or connect your YouTube account to upload directly.
-                        To enable uploads, replace the placeholder <code style="background:var(--bg2);padding:0 .3rem;border-radius:4px;">client_id</code> with your own from the Google Cloud Console.
+                        Each iteration: pick a random genre → generate a 400‑word story via Gemini → create video with narration → auto‑upload to YouTube.
+                        Errors are logged and skipped; the loop continues until you press <strong>Stop</strong>.
+                        Replace the <code style="background:var(--bg2);padding:0 .3rem;border-radius:4px;">client_id</code> and (if needed) the Gemini API key.
                     </p>
                 </div>
             </div>
@@ -632,11 +662,40 @@
 
     <script>
         // ──────────────────────────────────────────────────────────────
-        //  FIXED: audio captured via combined MediaStream
-        //  YouTube upload re‑added with OAuth 2.0
-        //  Replace the client_id below with your own.
+        //  CONFIGURATION – replace with your own credentials
         // ──────────────────────────────────────────────────────────────
+        const GEMINI_API_KEY = 'AQ.Ab8RN6L3tN8e05KOgdG73bxRbC2q4xGWDJDTrL56QoUnh2fzvA'; // user provided
+        // For YouTube OAuth, replace with your own client ID from Google Cloud Console
+        const YT_CLIENT_ID = '699259843998-qg5t2emtfubf2gpj7hbfrdgbi3lqocl5.apps.googleusercontent.com'; // <-- REPLACE ME
 
+        // ─── all genres from user's list ───
+        const GENRES = [
+            "Action", "Adventure", "Comedy", "Crime", "Drama", "Fantasy",
+            "Science Fiction (Sci-Fi)", "Horror", "Mystery", "Thriller", "Suspense",
+            "Romance", "Historical Fiction", "Historical Fantasy", "Alternate History",
+            "Western", "War", "Military Fiction", "Political Fiction", "Legal Thriller",
+            "Medical Drama", "Psychological Thriller", "Psychological Horror", "Paranormal",
+            "Supernatural", "Urban Fantasy", "Dark Fantasy", "Epic Fantasy", "High Fantasy",
+            "Low Fantasy", "Sword and Sorcery", "Mythology", "Fairy Tale", "Folklore",
+            "Fable", "Magical Realism", "Dystopian", "Utopian", "Post-Apocalyptic",
+            "Apocalyptic", "Steampunk", "Cyberpunk", "Biopunk", "Dieselpunk", "Solarpunk",
+            "Space Opera", "Time Travel", "First Contact", "Alien Invasion", "Coming of Age",
+            "Family Saga", "Slice of Life", "Survival", "Disaster", "Sports Fiction",
+            "School Life", "Campus Fiction", "Detective", "Noir", "Hard-Boiled Detective",
+            "Spy Fiction", "Espionage", "Heist", "Adventure Thriller", "Monster Fiction",
+            "Zombie Fiction", "Vampire Fiction", "Werewolf Fiction", "Ghost Story",
+            "Gothic Fiction", "Fairy Romance", "Dark Romance", "Romantic Comedy", "Chick Lit",
+            "Young Adult (YA)", "New Adult", "Children's Fiction", "Middle Grade",
+            "Fairy Tale Retelling", "Myth Retelling", "LitRPG", "GameLit", "Portal Fantasy",
+            "Isekai", "Cultivation (Xianxia)", "Wuxia", "Martial Arts", "Pirate Adventure",
+            "Treasure Hunt", "Road Trip", "Survival Horror", "Cosmic Horror",
+            "Lovecraftian Horror", "Body Horror", "Folk Horror", "Techno Thriller",
+            "Eco Thriller", "Climate Fiction (Cli-Fi)", "Speculative Fiction", "Satire",
+            "Tragedy", "Absurdist Fiction", "Philosophical Fiction", "Literary Fiction",
+            "Experimental Fiction", "Flash Fiction", "Short Story", "Anthology"
+        ];
+
+        // ─── core variables ──────────────────────────────────────────
         const SLIDE_MS = 2000,
             TRANS_MS = 450,
             CW = 1280,
@@ -656,6 +715,10 @@
         let speakUtter = null;
         let accessToken = null,
             tokenClient = null;
+
+        // auto‑loop control
+        let stopRequested = false;
+        let loopRunning = false;
 
         const $ = id => document.getElementById(id);
         const cv = $('cv'),
@@ -683,8 +746,12 @@
             fileMeta = $('fileMeta');
         const langSel = $('langSel'),
             ytSection = $('ytSection');
+        const loopStatus = $('loopStatus'),
+            iterCount = $('iterCount'),
+            currentGenre = $('currentGenre'),
+            currentStep = $('currentStep');
 
-        const SAMPLE = `The sun rose over the misty mountains, casting golden rays across the valley below. Birds began their morning chorus, filling the crisp air with melody. A lone hiker emerged from the tree line, her breath visible in the cold dawn. She adjusted her backpack and looked toward the distant peak. The trail wound through ancient forests where sunlight barely touched the ground. Moss-covered rocks lined the path like silent guardians of the wilderness. A stream appeared beside the trail, its crystal waters singing over smooth stones. She paused to drink and refill her water bottle, feeling the chill of mountain spring. The climb grew steeper as she ascended above the tree line into open alpine meadows. Wildflowers dotted the landscape with splashes of purple and gold. Now exposed to the full force of the wind, she pressed forward with determination. Clouds swirled around the upper slopes, creating an ethereal atmosphere. Finally she reached the summit and gasped at the breathtaking panorama. Mountains stretched endlessly in every direction, their peaks touching the clouds. She sat on a flat rock and let tears of joy stream down her face. In that moment, every step of the journey felt absolutely worth it.`;
+        const SAMPLE = `The sun rose over the misty mountains...`; // truncated for brevity
 
         // ─── Voice System ────────────────────────────────────────────
         function getLangPrefix() { return langSel.value; }
@@ -748,11 +815,11 @@
             speechSynthesis.speak(u);
         });
 
-        // ─── Input ──────────────────────────────────────────────────
+        // ─── Input (manual) ──────────────────────────────────────────
         inp.addEventListener('input', () => {
             const n = inp.value.trim().split(/\s+/).filter(Boolean).length;
             $('wc').textContent = `${n} word${n !== 1 ? 's' : ''}`;
-            genBtn.disabled = n < 5;
+            genBtn.disabled = n < 5; // but we'll override for auto loop
             if (n >= 5) voiceCard.classList.add('active');
             updatePreviewBtn();
         });
@@ -976,7 +1043,7 @@
             toastTimer = setTimeout(() => el.classList.remove('vis'), 3500);
         }
 
-        // ─── Recording with Audio ───────────────────────────────────
+        // ─── Recording with Audio (core) ────────────────────────────
         async function setupAudioStream() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
@@ -1000,6 +1067,161 @@
             }
         }
 
+        /**
+         * Creates a video from the given story text.
+         * Returns a Promise that resolves with the videoBlob when ready.
+         */
+        function createVideoFromText(text) {
+            return new Promise(async (resolve, reject) => {
+                try {
+                    // reset state
+                    if (playing) {
+                        playing = false;
+                        if (animId) cancelAnimationFrame(animId);
+                        if (speakUtter) speechSynthesis.cancel();
+                        if (recorder && recorder.state === 'recording') recorder.stop();
+                        if (combinedStream) { combinedStream.getTracks().forEach(t => t.stop());
+                            combinedStream = null; }
+                    }
+                    segs = [];
+                    imgs = [];
+                    videoBlob = null;
+                    recChunks = [];
+                    dlBtn.disabled = true;
+                    dlBtn2.disabled = true;
+                    $('ytUploadBtn').disabled = true;
+                    fileInfo.classList.remove('show');
+                    ytSection.classList.remove('show');
+                    doneOv.style.display = 'none';
+                    idleOv.style.display = 'none';
+
+                    // split into sentences
+                    segs = splitText(text);
+                    if (!segs.length) { reject('No sentences found'); return; }
+
+                    setBadge('load', 'Loading images...');
+                    genBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    progSec.style.display = 'block';
+
+                    for (let i = 0; i < segs.length; i++) {
+                        const seed = `s${Date.now()}${i}${Math.random().toString(36).slice(2, 6)}`;
+                        try { imgs.push(await loadImg(`https://picsum.photos/seed/${seed}/1280/720.jpg`)); } catch {
+                            const c = document.createElement('canvas');
+                            c.width = 1280;
+                            c.height = 720;
+                            const cx = c.getContext('2d'),
+                                hue = (i * 37) % 360;
+                            cx.fillStyle = `hsl(${hue},30%,18%)`;
+                            cx.fillRect(0, 0, 1280, 720);
+                            cx.font = '600 48px "Space Grotesk",sans-serif';
+                            cx.fillStyle = `hsl(${hue},40%,50%)`;
+                            cx.textAlign = 'center';
+                            cx.textBaseline = 'middle';
+                            cx.fillText(`Scene ${i+1}`, 640, 360);
+                            const im = new Image();
+                            im.src = c.toDataURL();
+                            await new Promise(r => { im.onload = r; });
+                            imgs.push(im);
+                        }
+                        setProg(((i + 1) / segs.length) * 70, `Loading image ${i+1} of ${segs.length}...`);
+                    }
+
+                    setProg(75, 'Setting up audio + video recorder...');
+                    await new Promise(r => setTimeout(r, 100));
+
+                    // start recording
+                    const ok = await startRecordingWithAudio(); // this sets up recorder and returns true/false
+                    if (!ok) {
+                        reject('Audio recording setup failed');
+                        return;
+                    }
+
+                    await new Promise(r => setTimeout(r, 200));
+                    setProg(85, 'Starting narration...');
+
+                    // TTS
+                    speakUtter = new SpeechSynthesisUtterance(text);
+                    speakUtter.rate = parseFloat(speedSlider.value);
+                    speakUtter.pitch = 1;
+                    speakUtter.lang = getLangCode();
+                    const sv = getVoice();
+                    if (sv) { speakUtter.voice = sv;
+                        speakUtter.lang = sv.lang; }
+
+                    speakUtter.onstart = () => setBadge('voice', 'Narrating...');
+                    speakUtter.onend = () => {
+                        ttsEnded = true;
+                        if (playing) {
+                            const elapsed = performance.now() - t0;
+                            const waitMs = SLIDE_MS - (elapsed % SLIDE_MS) + 400;
+                            setTimeout(() => {
+                                if (playing) {
+                                    // stop recording and resolve
+                                    stopRecordingAndResolve();
+                                }
+                            }, waitMs);
+                        }
+                    };
+                    speakUtter.onerror = (e) => {
+                        console.warn('TTS error:', e);
+                        if (playing) {
+                            stopRecordingAndResolve();
+                        }
+                    };
+
+                    playing = true;
+                    t0 = 0;
+                    ttsEnded = false;
+                    setProg(90, 'Recording video + audio...');
+
+                    // start animation and TTS
+                    setTimeout(() => {
+                        speechSynthesis.speak(speakUtter);
+                        animId = requestAnimationFrame(animate);
+                    }, 300);
+
+                    // resolve when recorder stops (inside stopRecordingAndResolve)
+                    function stopRecordingAndResolve() {
+                        if (recorder && recorder.state === 'recording') {
+                            recorder.stop();
+                        }
+                        // The recorder's onstop event will set videoBlob and resolve the promise
+                        // We'll use a one-time listener on recorder.onstop
+                    }
+
+                    // Wait for recorder to stop and set videoBlob
+                    const recorderStopPromise = new Promise((res) => {
+                        const originalOnstop = recorder.onstop;
+                        recorder.onstop = () => {
+                            if (originalOnstop) originalOnstop.call(recorder);
+                            // now videoBlob should be set
+                            if (videoBlob) {
+                                res(videoBlob);
+                            } else {
+                                // fallback: maybe still generating
+                                setTimeout(() => res(videoBlob), 1000);
+                            }
+                        };
+                    });
+
+                    // also handle error
+                    recorder.onerror = (e) => {
+                        console.error('Recorder error:', e);
+                        reject('Recorder error');
+                    };
+
+                    // Wait for stop
+                    const blob = await recorderStopPromise;
+                    resolve(blob);
+
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        }
+
+        // Helper to start recording (sets up combinedStream, recorder)
         async function startRecordingWithAudio() {
             recChunks = [];
             if (videoUrl) { URL.revokeObjectURL(videoUrl);
@@ -1055,18 +1277,10 @@
                     dlBtn.disabled = false;
                     dlBtn2.disabled = false;
                     if (accessToken) $('ytUploadBtn').disabled = false;
-                    setBadge('done', 'Ready to download');
+                    setBadge('done', 'Video ready');
                     setProg(100, 'Video ready!');
                     setTimeout(() => { progSec.style.display = 'none'; }, 1500);
                     toast('✅ Video with audio ready!', 'fa-check-circle', '#22c55e');
-                };
-
-                recorder.onerror = (e) => {
-                    console.error('Recorder error:', e);
-                    toast('Recording failed — try again', 'fa-triangle-exclamation', '#ef4444');
-                    setBadge('idle', 'Error');
-                    genBtn.disabled = false;
-                    stopBtn.disabled = true;
                 };
 
                 recorder.start(200);
@@ -1078,158 +1292,181 @@
             }
         }
 
-        // ─── Stop ───────────────────────────────────────────────────
-        function stop() {
-            playing = false;
-            if (animId) { cancelAnimationFrame(animId);
-                animId = null; }
-            if (speakUtter) { speechSynthesis.cancel();
-                speakUtter = null; }
-            if (recorder && recorder.state === 'recording') recorder.stop();
-            t0 = 0;
-            ttsEnded = false;
-            stopBtn.disabled = true;
-            genBtn.disabled = false;
-            doneOv.style.display = 'flex';
-            if (combinedStream) {
-                combinedStream.getTracks().forEach(t => t.stop());
-                combinedStream = null;
-            }
-        }
-
-        // ─── Generate ──────────────────────────────────────────────
-        async function generate() {
-            const text = inp.value.trim();
-            if (text.split(/\s+/).length < 5) return;
-
+        // ─── Stop current recording ──────────────────────────────────
+        function stopCurrentRecording() {
             if (playing) {
                 playing = false;
                 if (animId) cancelAnimationFrame(animId);
                 if (speakUtter) speechSynthesis.cancel();
                 if (recorder && recorder.state === 'recording') recorder.stop();
-                if (combinedStream) { combinedStream.getTracks().forEach(t => t.stop());
-                    combinedStream = null; }
+                if (combinedStream) {
+                    combinedStream.getTracks().forEach(t => t.stop());
+                    combinedStream = null;
+                }
+                t0 = 0;
+                ttsEnded = false;
+                stopBtn.disabled = true;
+                genBtn.disabled = false;
+                doneOv.style.display = 'flex';
             }
+        }
 
-            segs = [];
-            imgs = [];
-            videoBlob = null;
-            recChunks = [];
-            dlBtn.disabled = true;
-            dlBtn2.disabled = true;
-            $('ytUploadBtn').disabled = true;
-            fileInfo.classList.remove('show');
-            ytSection.classList.remove('show');
-            doneOv.style.display = 'none';
-            idleOv.style.display = 'none';
+        // ─── Gemini API call ─────────────────────────────────────────
+        async function generateStoryFromGemini(genre) {
+            const prompt = `Write a 400-word story in the "${genre}" genre.`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
+            const payload = {
+                contents: [{
+                    parts: [{ text: prompt }]
+                }]
+            };
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(`Gemini API error (${response.status}): ${errText}`);
+                }
+                const data = await response.json();
+                const story = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!story) throw new Error('No story in response');
+                return story.trim();
+            } catch (e) {
+                console.error('Gemini fetch error:', e);
+                throw e;
+            }
+        }
 
-            segs = splitText(text);
-            if (!segs.length) { toast('Could not parse text', 'fa-triangle-exclamation', '#ef4444'); return; }
-
-            setBadge('load', 'Loading images...');
+        // ─── Auto‑loop logic ────────────────────────────────────────
+        async function runAutoLoop() {
+            if (loopRunning) return;
+            loopRunning = true;
+            stopRequested = false;
             genBtn.disabled = true;
             stopBtn.disabled = false;
-            progSec.style.display = 'block';
+            loopStatus.style.display = 'flex';
+            let iteration = 0;
 
-            for (let i = 0; i < segs.length; i++) {
-                const seed = `s${Date.now()}${i}${Math.random().toString(36).slice(2, 6)}`;
-                try { imgs.push(await loadImg(`https://picsum.photos/seed/${seed}/1280/720.jpg`)); } catch {
-                    const c = document.createElement('canvas');
-                    c.width = 1280;
-                    c.height = 720;
-                    const cx = c.getContext('2d'),
-                        hue = (i * 37) % 360;
-                    cx.fillStyle = `hsl(${hue},30%,18%)`;
-                    cx.fillRect(0, 0, 1280, 720);
-                    cx.font = '600 48px "Space Grotesk",sans-serif';
-                    cx.fillStyle = `hsl(${hue},40%,50%)`;
-                    cx.textAlign = 'center';
-                    cx.textBaseline = 'middle';
-                    cx.fillText(`Scene ${i+1}`, 640, 360);
-                    const im = new Image();
-                    im.src = c.toDataURL();
-                    await new Promise(r => { im.onload = r; });
-                    imgs.push(im);
+            while (!stopRequested) {
+                iteration++;
+                iterCount.textContent = iteration;
+                let genre = 'Unknown';
+                let story = '';
+                let videoOk = false;
+                let uploadOk = false;
+
+                try {
+                    // 1. Pick genre
+                    genre = GENRES[Math.floor(Math.random() * GENRES.length)];
+                    currentGenre.textContent = genre;
+                    currentStep.textContent = 'Generating story...';
+                    setBadge('load', `Generating ${genre} story...`);
+
+                    // 2. Get story from Gemini
+                    story = await generateStoryFromGemini(genre);
+                    inp.value = story;
+                    inp.dispatchEvent(new Event('input'));
+                    currentStep.textContent = 'Story ready';
+
+                    // 3. Create video
+                    currentStep.textContent = 'Creating video...';
+                    setBadge('load', 'Creating video...');
+                    const blob = await createVideoFromText(story);
+                    if (!blob) throw new Error('Video blob is null');
+                    videoBlob = blob;
+                    videoOk = true;
+                    currentStep.textContent = 'Video ready';
+
+                    // 4. Upload to YouTube (if signed in)
+                    if (accessToken) {
+                        currentStep.textContent = 'Uploading to YouTube...';
+                        setBadge('yt', 'Uploading...');
+                        await uploadToYouTubeInternal();
+                        uploadOk = true;
+                        currentStep.textContent = 'Uploaded';
+                        toast(`✅ Uploaded iteration ${iteration}`, 'fa-check-circle', '#22c55e');
+                    } else {
+                        currentStep.textContent = 'Skipping upload (not signed in)';
+                        toast('Not signed in to YouTube – video ready for download', 'fa-info-circle', '#f59e0b');
+                    }
+
+                } catch (err) {
+                    console.error(`Iteration ${iteration} error:`, err);
+                    currentStep.textContent = `Error: ${err.message || 'unknown'}`;
+                    toast(`Error in iteration ${iteration}: ${err.message || 'unknown'}`, 'fa-triangle-exclamation', '#ef4444');
+                    // continue to next iteration
                 }
-                setProg(((i + 1) / segs.length) * 70, `Loading image ${i+1} of ${segs.length}...`);
+
+                // small pause between iterations
+                await new Promise(r => setTimeout(r, 1000));
+
+                // If stop requested, break
+                if (stopRequested) break;
             }
 
-            setProg(75, 'Setting up audio + video recorder...');
-            await new Promise(r => setTimeout(r, 100));
+            loopRunning = false;
+            genBtn.disabled = false;
+            stopBtn.disabled = true;
+            loopStatus.style.display = 'none';
+            setBadge('idle', 'Loop stopped');
+            toast('Auto‑loop stopped', 'fa-stop-circle', '#f59e0b');
+        }
 
-            const ok = await startRecordingWithAudio();
-            if (!ok) {
-                genBtn.disabled = false;
-                stopBtn.disabled = true;
-                setBadge('idle', 'Audio error');
-                return;
-            }
-
-            await new Promise(r => setTimeout(r, 200));
-            setProg(85, 'Starting narration...');
-
-            speakUtter = new SpeechSynthesisUtterance(text);
-            speakUtter.rate = parseFloat(speedSlider.value);
-            speakUtter.pitch = 1;
-            speakUtter.lang = getLangCode();
-            const sv = getVoice();
-            if (sv) { speakUtter.voice = sv;
-                speakUtter.lang = sv.lang; }
-
-            speakUtter.onstart = () => setBadge('voice', 'Narrating...');
-            speakUtter.onend = () => {
-                ttsEnded = true;
-                if (playing) {
-                    const elapsed = performance.now() - t0;
-                    const waitMs = SLIDE_MS - (elapsed % SLIDE_MS) + 400;
-                    setTimeout(() => { if (playing) stop(); }, waitMs);
+        // Internal upload function (uses current videoBlob)
+        async function uploadToYouTubeInternal() {
+            if (!accessToken || !videoBlob) return;
+            const metadata = {
+                snippet: {
+                    title: $('ytTitle').value || `Story - ${currentGenre.textContent || 'video'}`,
+                    description: $('ytDesc').value || 'Auto-generated by StoryToVideo',
+                    categoryId: '22'
+                },
+                status: {
+                    privacyStatus: $('ytPrivacy').value || 'private',
+                    selfDeclaredMadeForKids: false
                 }
             };
-            speakUtter.onerror = (e) => {
-                console.warn('TTS error:', e);
-                if (playing) stop();
-            };
+            const fd = new FormData();
+            fd.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+            fd.append('file', videoBlob, fileName.textContent);
 
-            playing = true;
-            t0 = 0;
-            ttsEnded = false;
-            setProg(90, 'Recording video + audio...');
+            const res = await fetch(
+                'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=multipart&part=snippet,status', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${accessToken}` },
+                    body: fd
+                });
 
-            setTimeout(() => {
-                speechSynthesis.speak(speakUtter);
-                animId = requestAnimationFrame(animate);
-            }, 300);
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                if (res.status === 401) {
+                    accessToken = null;
+                    updateYtUI(false);
+                    throw new Error('Session expired. Sign in again.');
+                }
+                throw new Error(errData.error?.message || `Upload failed (${res.status})`);
+            }
+            const data = await res.json();
+            const vidId = data.id || 'unknown';
+            toast(`🎬 Uploaded! youtube.com/watch?v=${vidId}`, 'fa-check-circle', '#22c55e');
         }
 
-        // ─── Download ──────────────────────────────────────────────
-        function doDownload() {
-            if (!videoBlob) return;
-            const a = document.createElement('a');
-            a.href = videoUrl || URL.createObjectURL(videoBlob);
-            a.download = fileName.textContent;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            setBadge('dl', 'Downloaded');
-            toast('Video downloaded!', 'fa-download', '#ef4444');
-        }
-
-        // ─── YouTube Upload (OAuth) ────────────────────────────────
+        // ─── YouTube OAuth ──────────────────────────────────────────
         function initYouTube() {
             try {
                 if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) return;
-                // ⚠️ REPLACE this client_id with your own from Google Cloud Console.
-                // Go to https://console.cloud.google.com/apis/credentials
-                // Create an OAuth 2.0 Client ID for a Web application.
-                const CLIENT_ID = '699259843998-qg5t2emtfubf2gpj7hbfrdgbi3lqocl5.apps.googleusercontent.com';
                 tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: CLIENT_ID,
+                    client_id: YT_CLIENT_ID,
                     scope: 'https://www.googleapis.com/auth/youtube.upload',
                     callback: (response) => {
                         if (response.access_token) { accessToken = response.access_token;
-                            updateYtUI(true); } else if (response.error !== 'popup_closed') { toast(
-                                'Sign-in failed: ' + (response.error || 'unknown'), 'fa-triangle-exclamation',
-                                '#ef4444'); }
+                            updateYtUI(true);
+                            toast('YouTube connected!', 'fa-check-circle', '#22c55e'); } else if (response.error !==
+                            'popup_closed') { toast('Sign-in failed: ' + (response.error || 'unknown'),
+                                'fa-triangle-exclamation', '#ef4444'); }
                     }
                 });
             } catch (e) { console.warn('GSI init failed:', e); }
@@ -1243,89 +1480,57 @@
 
         $('ytSignInBtn').addEventListener('click', () => {
             if (tokenClient) tokenClient.requestAccessToken();
-            else toast('Google Sign-In not loaded. Check your connection.', 'fa-triangle-exclamation', '#f59e0b');
+            else toast('Google Sign-In not loaded.', 'fa-triangle-exclamation', '#f59e0b');
         });
 
         $('ytSignOutBtn').addEventListener('click', () => {
             if (accessToken && google && google.accounts && google.accounts.oauth2) {
                 google.accounts.oauth2.revoke(accessToken, () => { accessToken = null;
-                    updateYtUI(false); });
+                    updateYtUI(false);
+                    toast('Signed out', 'fa-info-circle', '#f59e0b'); });
             } else { accessToken = null;
                 updateYtUI(false); }
         });
 
-        $('ytUploadBtn').addEventListener('click', uploadToYouTube);
-
-        async function uploadToYouTube() {
-            if (!accessToken || !videoBlob) return;
-            const btn = $('ytUploadBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner spin"></i> Uploading...';
-            setBadge('yt', 'Uploading to YouTube...');
-
-            const metadata = {
-                snippet: {
-                    title: $('ytTitle').value || 'My Story Video',
-                    description: $('ytDesc').value || 'Generated by StoryToVideo',
-                    categoryId: '22'
-                },
-                status: {
-                    privacyStatus: $('ytPrivacy').value || 'private',
-                    selfDeclaredMadeForKids: false
-                }
-            };
-
-            try {
-                const fd = new FormData();
-                fd.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                fd.append('file', videoBlob, fileName.textContent);
-
-                const res = await fetch(
-                    'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=multipart&part=snippet,status', {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${accessToken}` },
-                        body: fd
-                    });
-
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    if (res.status === 401) {
-                        accessToken = null;
-                        updateYtUI(false);
-                        throw new Error('Session expired. Sign in again.');
-                    }
-                    throw new Error(errData.error?.message || `Upload failed (${res.status})`);
-                }
-
-                const data = await res.json();
-                const vidId = data.id || 'unknown';
-                toast(`🎬 Uploaded! youtube.com/watch?v=${vidId}`, 'fa-check-circle', '#22c55e');
-                setBadge('done', 'Uploaded!');
-            } catch (e) {
-                console.error('YT Upload error:', e);
-                toast(e.message || 'Upload failed', 'fa-triangle-exclamation', '#ef4444');
-                setBadge('done', 'Upload failed');
-            } finally {
-                btn.disabled = !videoBlob || !accessToken;
-                btn.innerHTML = '<i class="fab fa-youtube"></i> Upload to YouTube';
-            }
-        }
-
-        window.addEventListener('load', () => { setTimeout(initYouTube, 500); });
-
         // ─── Event Bindings ────────────────────────────────────────
-        genBtn.addEventListener('click', generate);
-        stopBtn.addEventListener('click', () => {
-            if (playing) { stop();
-                setBadge('idle', 'Stopped');
-                toast('Stopped', 'fa-stop-circle', '#f59e0b'); }
+
+        // Start auto loop
+        genBtn.addEventListener('click', () => {
+            if (loopRunning) return;
+            // Check if signed in? We'll let it run, but upload will be skipped if not.
+            runAutoLoop();
         });
-        dlBtn.addEventListener('click', doDownload);
-        dlBtn2.addEventListener('click', doDownload);
-        doneOv.addEventListener('click', () => { doneOv.style.display = 'none';
-            generate(); });
+
+        // Stop button
+        stopBtn.addEventListener('click', () => {
+            stopRequested = true;
+            stopCurrentRecording();
+            // The loop will exit after current iteration
+        });
+
+        // Download buttons (manual)
+        dlBtn.addEventListener('click', () => {
+            if (!videoBlob) return;
+            const a = document.createElement('a');
+            a.href = videoUrl || URL.createObjectURL(videoBlob);
+            a.download = fileName.textContent;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setBadge('dl', 'Downloaded');
+            toast('Video downloaded!', 'fa-download', '#ef4444');
+        });
+        dlBtn2.addEventListener('click', () => {
+            dlBtn.click();
+        });
+
+        // Replay overlay
+        doneOv.addEventListener('click', () => { doneOv.style.display = 'none'; });
         doneOv.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault();
                 doneOv.click(); } });
+
+        // Init YouTube on load
+        window.addEventListener('load', () => { setTimeout(initYouTube, 500); });
 
         // Idle canvas
         ctx.fillStyle = '#080706';
